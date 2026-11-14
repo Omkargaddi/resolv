@@ -37,8 +37,8 @@ Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocke
 
 ```
                                     +------------------+
-                                    |   Client Apps    |
-                                    | (Web - React Vite|
+                                    |   Client Apps     |
+                                    | (Web - React Vite)|
                                     +--------+---------+
                                              |
                                      WebSocket / HTTPS

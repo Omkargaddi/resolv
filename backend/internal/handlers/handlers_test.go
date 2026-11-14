@@ -11,7 +11,7 @@ import (
 )
 
 func TestRenderServiceError(t *testing.T) {
-	// 1. With BookingError
+	// with BookingError
 	rec1 := httptest.NewRecorder()
 	bErr := services.NewBookingError("Slot locked", "SLOT_LOCKED", http.StatusConflict)
 	RenderServiceError(rec1, bErr, "Default fallback")
@@ -27,7 +27,7 @@ func TestRenderServiceError(t *testing.T) {
 		t.Errorf("unexpected error payload: %+v", res1)
 	}
 
-	// 2. With generic error
+	// With generic error
 	rec2 := httptest.NewRecorder()
 	genericErr := errors.New("db connection closed")
 	RenderServiceError(rec2, genericErr, "Something went wrong")

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Radio, Trash2, Copy, Check, Terminal, Activity } from 'lucide-react';
+import { Radio, Trash2, Copy, Check, Activity } from 'lucide-react';
 import { WebSocketEvent } from '../types';
+import { getWebSocketUrl } from '../services/websocket';
 
 interface WebSocketLogProps {
   events: WebSocketEvent[];
@@ -31,8 +32,8 @@ export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) =
                 {events.length}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-mono hidden sm:block">
-              ws://localhost:4000/ws
+            <p className="text-xs text-slate-500 font-mono hidden sm:block truncate max-w-xs">
+              {getWebSocketUrl()}
             </p>
           </div>
         </div>

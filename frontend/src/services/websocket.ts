@@ -3,6 +3,24 @@ import { WebSocketEvent } from '../types';
 type EventListener = (event: WebSocketEvent) => void;
 type StatusListener = (status: 'connected' | 'connecting' | 'disconnected' | 'error') => void;
 
+export function getWebSocketUrl(): string {
+  if (import.meta.env.VITE_WS_URL) {
+    const trimmed = import.meta.env.VITE_WS_URL.replace(/\/+$/, '');
+    return trimmed.endsWith('/ws') ? trimmed : `${trimmed}/ws`;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    try {
+      const url = new URL(import.meta.env.VITE_API_URL, window.location.origin);
+      const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProtocol}//${url.host}/ws`;
+    } catch {
+      // fallback
+    }
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/ws`;
+}
+
 class WebSocketClient {
   private ws: WebSocket | null = null;
   private eventListeners: Set<EventListener> = new Set();
@@ -23,9 +41,7 @@ class WebSocketClient {
 
     this.setStatus('connecting');
 
-    // Auto-detect host: if dev server at localhost:3000, Vite proxies /ws to localhost:4000/ws
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = getWebSocketUrl();
 
     try {
       this.ws = new WebSocket(wsUrl);
