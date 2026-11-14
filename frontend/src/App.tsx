@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth, PRESET_PERSONAS } from './context/AuthContext';
-import Header from '../../../frontend/src/components/Header';
+import Header from './components/Header';
 import ClientPane from '../../../frontend/src/components/ClientPane';
-import ConcurrencyArena from '../../../frontend/src/components/ConcurrencyArena';
-import WebSocketLog from '../../../frontend/src/components/WebSocketLog';
+import ConcurrencyArena from './components/ConcurrencyArena';
+import WebSocketLog from './components/WebSocketLog';
 import { wsClient } from './services/websocket';
 import { WebSocketEvent, Venue } from './types';
 import { getVenuesApi } from './services/api';
