@@ -1,8 +1,7 @@
 <p align="center">
-  <h1 align="center">Resolv</h1>
+  <img width="866" height="288" alt="image" src="https://github.com/user-attachments/assets/d1eaaa77-c2de-43d7-a463-b5041a643196" />
   <p align="center">A high-performance, real-time booking and reservation system built for scale.</p>
 </p>
-
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go" alt="Go" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Router-Chi-blue?style=flat-square" alt="Chi" /></a>
