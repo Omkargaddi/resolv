@@ -140,26 +140,26 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-sm text-rose-300 font-mono">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-sm text-rose-700 font-mono">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Slots List */}
       {isLoading && slots.length === 0 ? (
-        <div className="py-20 text-center text-[#95CCDD] text-sm flex flex-col items-center justify-center gap-3">
-          <RefreshCw className="w-5 h-5 animate-spin text-[#4274D9]" />
-          <span className="font-mono">Loading available slots...</span>
+        <div className="py-20 text-center text-slate-500 text-sm flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-6 h-6 animate-spin text-[#6892D5]" />
+          <span className="font-mono text-sm">Loading available slots...</span>
         </div>
       ) : slots.length === 0 ? (
-        <div className="py-16 text-center text-[#95CCDD] text-sm flex flex-col items-center justify-center gap-3 bg-[#0a0e28]/50 rounded-2xl border border-dashed border-[#1c2763]">
-          <AlertCircle className="w-6 h-6 text-[#4274D9]" />
-          <p className="font-semibold text-white">No slots available for this date</p>
-          <p className="text-xs text-[#95CCDD]">Select another day from the universal picker above.</p>
+        <div className="py-16 text-center text-slate-500 text-sm flex flex-col items-center justify-center gap-3 bg-white rounded-2xl border border-dashed border-[#79D1C3]/50 p-6">
+          <AlertCircle className="w-8 h-8 text-[#6892D5]" />
+          <p className="font-bold text-base text-slate-800">No slots available for this date</p>
+          <p className="text-sm text-slate-500">Select another day from the universal picker above.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3.5">
           {slots.map((slot) => {
             const isBlocked = slot.status === 'blocked';
             const isBooked = slot.status === 'booked' || slot.remainingCapacity <= 0;
@@ -172,60 +172,60 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
             return (
               <div
                 key={slot.id}
-                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3.5 ${
+                className={`p-4.5 rounded-2xl border transition-all flex flex-col justify-between gap-4 shadow-xs hover:shadow-md ${
                   isBlocked
-                    ? 'bg-[#0b1028]/60 border-rose-500/30 shadow-inner'
+                    ? 'bg-rose-50/40 border-rose-200'
                     : isBooked
-                    ? 'bg-[#0b1028]/60 border-[#1c2763]/80 opacity-75'
+                    ? 'bg-slate-50/70 border-slate-200 opacity-80'
                     : isLimited
-                    ? 'bg-[#0f1538] border-amber-500/40 hover:border-amber-500/70 shadow-sm'
-                    : 'bg-[#0f1538] border-[#1c2763] hover:border-[#4274D9]/60 shadow-sm hover:shadow-md'
+                    ? 'bg-amber-50/20 border-amber-300'
+                    : 'bg-white border-[#79D1C3]/35 hover:border-[#6892D5]/70'
                 }`}
               >
                 {/* Header: Time, Duration & Status Badge */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Clock className="w-4 h-4 text-[#4274D9] shrink-0" />
-                    <span className="font-mono text-sm font-bold text-white whitespace-nowrap">
+                    <Clock className="w-4 h-4 text-[#6892D5] shrink-0" />
+                    <span className="font-mono text-base font-bold text-slate-800 whitespace-nowrap">
                       {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
                     </span>
-                    <span className="text-xs font-medium text-[#95CCDD] whitespace-nowrap">
+                    <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
                       ({slot.durationMinutes}m)
                     </span>
                   </div>
 
                   {/* Status Badge */}
                   {isBlocked ? (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-rose-500/15 text-rose-300 border border-rose-500/40 flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-rose-400" />
+                    <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-rose-100 text-rose-700 border border-rose-300 flex items-center gap-1.5 shadow-xs">
+                      <Lock className="w-3.5 h-3.5 text-rose-600" />
                       Locked
                     </span>
                   ) : isBooked ? (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-[#1c2763] text-[#D0E7E6] border border-[#293681]">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-slate-100 text-slate-600 border border-slate-300 shadow-xs">
                       Sold Out
                     </span>
                   ) : isLimited ? (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/40">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">
                       {slot.remainingCapacity} left
                     </span>
                   ) : (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#C9FDD7] text-[#134e44] border border-[#79D1C3]/60 shadow-xs">
                       Available
                     </span>
                   )}
                 </div>
 
                 {/* Details: Price & Capacity */}
-                <div className="flex items-center justify-between text-sm text-[#95CCDD] border-t border-[#1c2763]/80 pt-3">
+                <div className="flex items-center justify-between text-sm text-slate-600 border-t border-slate-100 pt-3">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-lg font-bold text-white font-mono">
+                    <span className="text-xl font-bold text-slate-900 font-mono">
                       ${slot.price ? Number(slot.price).toFixed(2) : '0.00'}
                     </span>
-                    <span className="text-xs font-semibold text-[#95CCDD] uppercase tracking-wider">{slot.currency}</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{slot.currency}</span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs font-mono font-medium text-[#D0E7E6]">
-                    <Users className="w-4 h-4 text-[#4274D9]" />
+                  <div className="flex items-center gap-2 text-sm font-mono font-semibold text-slate-700">
+                    <Users className="w-4 h-4 text-[#6892D5]" />
                     <span>
                       {slot.remainingCapacity} / {slot.capacity} seats left
                     </span>
@@ -233,16 +233,16 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
                 </div>
 
                 {/* Capacity Progress Bar */}
-                <div className="w-full h-1.5 bg-[#090d24] rounded-full overflow-hidden border border-[#1c2763]/50">
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                   <div
                     className={`h-full transition-all duration-300 rounded-full ${
                       isBlocked
-                        ? 'bg-rose-500/60'
+                        ? 'bg-rose-400'
                         : isBooked
-                        ? 'bg-slate-600'
+                        ? 'bg-slate-400'
                         : isLimited
                         ? 'bg-amber-400'
-                        : 'bg-[#4274D9]'
+                        : 'bg-[#6892D5]'
                     }`}
                     style={{ width: `${100 - capacityPercent}%` }}
                   />
@@ -253,39 +253,39 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
                   <button
                     onClick={() => onSelectSlot(slot)}
                     disabled={isBlocked || isBooked}
-                    className={`flex-1 py-2 px-3.5 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
+                    className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
                       isBlocked || isBooked
-                        ? 'bg-[#090d22] text-slate-500 cursor-not-allowed border border-[#1c2763]/60'
-                        : 'bg-[#4274D9] hover:bg-[#293681] text-white shadow-md shadow-[#4274D9]/20 hover:shadow-none'
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                        : 'bg-[#6892D5] hover:bg-[#557ec4] text-white shadow-xs hover:shadow-md shadow-[#6892D5]/20'
                     }`}
                   >
                     <BookmarkCheck className="w-4 h-4" />
                     <span>{isBooked ? 'Sold Out' : isBlocked ? 'Unavailable' : 'Reserve Slot'}</span>
                   </button>
 
-                  {/* Admin Lock/Unlock Button with unambiguous state and immediate feedback */}
+                  {/* Admin Lock/Unlock Button with unambiguous action state and immediate feedback */}
                   {userRole === 'admin' && (
                     <button
                       onClick={() => handleToggleBlock(slot)}
                       disabled={actionSlotId === slot.id}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 border shadow-sm ${
+                      className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border shadow-xs ${
                         isBlocked
-                          ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/50'
-                          : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40'
+                          ? 'bg-[#C9FDD7] hover:bg-[#b2f8c5] text-[#134e44] border-[#79D1C3]'
+                          : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-300'
                       }`}
                       title={isBlocked ? 'Click to Unlock this slot' : 'Click to Lock this slot'}
                     >
                       {actionSlotId === slot.id ? (
-                        <RefreshCw className="w-4 h-4 animate-spin text-[#95CCDD]" />
+                        <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />
                       ) : isBlocked ? (
                         <>
-                          <Lock className="w-4 h-4 text-rose-400" />
-                          <span>Locked</span>
+                          <Unlock className="w-4 h-4 text-[#134e44]" />
+                          <span>Unlock</span>
                         </>
                       ) : (
                         <>
-                          <Unlock className="w-4 h-4 text-emerald-400" />
-                          <span>Unlocked</span>
+                          <Lock className="w-4 h-4 text-rose-600" />
+                          <span>Lock</span>
                         </>
                       )}
                     </button>

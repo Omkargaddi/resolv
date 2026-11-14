@@ -52,7 +52,6 @@ export class BookingService {
   async createBooking(input: CreateBookingInput): Promise<Booking> {
     const { userId, slotId, venueId, guestCount, notes } = input;
 
-    // Acquire distributed lock to prevent double-booking
     const lockKey = `booking:slot:${slotId}`;
     const lockId = await RedisClient.acquireLock(lockKey, 15000);
 
@@ -69,13 +68,11 @@ export class BookingService {
     await queryRunner.startTransaction('SERIALIZABLE');
 
     try {
-      // Verify user exists and is active
       const user = await this.userRepo.findOne({ where: { id: userId, isActive: true } });
       if (!user) {
         throw new BookingError('User not found or inactive', 'USER_NOT_FOUND', 404);
       }
 
-      // Check user's concurrent booking limit
       const activeBookings = await this.bookingRepo.count({
         where: {
           userId,
@@ -96,7 +93,6 @@ export class BookingService {
         );
       }
 
-      // Fetch slot with row-level lock
       const slot = await queryRunner.manager
         .getRepository(Slot)
         .createQueryBuilder('slot')
@@ -123,7 +119,6 @@ export class BookingService {
         throw new BookingError('Cannot book a slot in the past', 'SLOT_IN_PAST');
       }
 
-      // Check advance booking window
       const maxAdvanceDays = parseInt(
         process.env.MAX_BOOKING_ADVANCE_DAYS || '90',
         10
@@ -138,7 +133,6 @@ export class BookingService {
         );
       }
 
-      // Check for duplicate booking
       const existingBooking = await this.bookingRepo.findOne({
         where: {
           userId,
@@ -155,7 +149,6 @@ export class BookingService {
         );
       }
 
-      // Create booking
       const booking = this.bookingRepo.create({
         userId,
         slotId,
@@ -170,7 +163,6 @@ export class BookingService {
 
       await queryRunner.manager.save(booking);
 
-      // Update slot capacity
       slot.remainingCapacity -= guestCount;
       if (slot.remainingCapacity === 0) {
         slot.status = SlotStatus.BOOKED;
@@ -179,17 +171,14 @@ export class BookingService {
 
       await queryRunner.commitTransaction();
 
-      // Invalidate cache
       await this.invalidateSlotCache(venueId, slot.date);
 
-      // Queue async tasks
       await this.queueService.addJob('booking:confirmed', {
         bookingId: booking.id,
         userId,
         confirmationCode: booking.confirmationCode,
       });
 
-      // Send notification
       await this.notificationService.send({
         type: NotificationType.BOOKING_CONFIRMED,
         userId,
@@ -251,7 +240,6 @@ export class BookingService {
       booking.cancellationReason = reason;
       await queryRunner.manager.save(booking);
 
-      // Restore slot capacity
       const slot = await queryRunner.manager
         .getRepository(Slot)
         .createQueryBuilder('slot')
@@ -269,10 +257,8 @@ export class BookingService {
 
       await queryRunner.commitTransaction();
 
-      // Invalidate cache
       await this.invalidateSlotCache(booking.venueId, booking.bookingDate);
 
-      // Queue refund / notification processing
       await this.queueService.addJob('booking:cancelled', {
         bookingId: booking.id,
         userId,
@@ -317,15 +303,9 @@ export class BookingService {
       .createQueryBuilder('slot')
       .where('slot.venueId = :venueId', { venueId })
       .andWhere('slot.date = :date', { date })
-      .andWhere('slot.status IN (:...statuses)', {
-        statuses: [SlotStatus.AVAILABLE],
-      })
-      .andWhere('slot.remainingCapacity > 0')
-      .andWhere('slot.startTime > :now', { now: new Date() })
       .orderBy('slot.startTime', 'ASC')
       .getMany();
 
-    // Cache for 60 seconds
     await redis.set(cacheKey, JSON.stringify(slots), 'EX', 60);
 
     return slots;
@@ -367,7 +347,7 @@ export class BookingService {
     });
   }
 
-  private async invalidateSlotCache(venueId: string, date: string): Promise<void> {
+  public async invalidateSlotCache(venueId: string, date: string): Promise<void> {
     const redis = RedisClient.getInstance();
     const cacheKey = `slots:${venueId}:${date}`;
     await redis.del(cacheKey);

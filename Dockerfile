@@ -1,22 +1,18 @@
-# ---- Base Stage ----
 FROM node:20-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache dumb-init curl
 
-# ---- Dependencies ----
 FROM base AS dependencies
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production && \
     cp -R node_modules /prod_modules && \
     npm ci
 
-# ---- Build ----
 FROM dependencies AS build
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-# ---- Production ----
 FROM base AS production
 ENV NODE_ENV=production
 USER node

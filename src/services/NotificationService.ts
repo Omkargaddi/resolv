@@ -133,8 +133,7 @@ export class NotificationService {
         userId,
       });
 
-      // Don't throw -- notifications should not break the booking flow.
-      // The queue worker will retry failed notifications.
+      // don't throw error notifications should not break the booking flow
     }
   }
 

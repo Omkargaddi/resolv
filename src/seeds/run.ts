@@ -14,7 +14,6 @@ async function seed(): Promise<void> {
   const userRepo = AppDataSource.getRepository(User);
   const slotRepo = AppDataSource.getRepository(Slot);
 
-  // 1. Seed Users
   const existingAdmin = await userRepo.findOne({ where: { email: 'admin@reserve.local' } });
   if (!existingAdmin) {
     const admin = userRepo.create({
@@ -62,7 +61,6 @@ async function seed(): Promise<void> {
     logger.info('Alice user already exists');
   }
 
-  // 2. Seed Sample Slots for a Demo Venue
   const sampleVenueId = '11111111-1111-1111-1111-111111111111';
   const slotCount = await slotRepo.count({ where: { venueId: sampleVenueId } });
 
@@ -70,25 +68,21 @@ async function seed(): Promise<void> {
     const now = new Date();
     const slots: Slot[] = [];
 
-    // Create slots for the next 7 days, 3 slots per day
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
       const slotDate = new Date(now);
       slotDate.setDate(now.getDate() + dayOffset);
       const dateString = slotDate.toISOString().split('T')[0];
 
-      // 10:00 - 11:00
       const start1 = new Date(slotDate);
       start1.setHours(10, 0, 0, 0);
       const end1 = new Date(slotDate);
       end1.setHours(11, 0, 0, 0);
 
-      // 14:00 - 15:00
       const start2 = new Date(slotDate);
       start2.setHours(14, 0, 0, 0);
       const end2 = new Date(slotDate);
       end2.setHours(15, 0, 0, 0);
 
-      // 18:00 - 19:00
       const start3 = new Date(slotDate);
       start3.setHours(18, 0, 0, 0);
       const end3 = new Date(slotDate);

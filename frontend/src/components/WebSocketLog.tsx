@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Radio, ChevronUp, ChevronDown, Trash2, Copy, Check, Terminal } from 'lucide-react';
+import { Radio, Trash2, Copy, Check, Terminal, Activity } from 'lucide-react';
 import { WebSocketEvent } from '../types';
 
 interface WebSocketLogProps {
@@ -8,7 +8,6 @@ interface WebSocketLogProps {
 }
 
 export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const copyEvent = (event: WebSocketEvent, index: number) => {
@@ -18,105 +17,100 @@ export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) =
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#080c20]/95 backdrop-blur-md border-t border-[#1c2763] shadow-xl transition-all">
-      {/* Ticker / Header bar */}
-      <div className="px-4 py-2.5 flex items-center justify-between text-xs font-mono">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-3 text-[#D0E7E6] hover:text-white transition group"
-        >
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[#0f1538] border border-[#1c2763]">
-            <Radio className="w-3.5 h-3.5 text-[#4274D9] animate-pulse" />
-            <span className="font-semibold text-white text-xs">WebSocket Live Stream</span>
-            <span className="text-[#95CCDD] text-xs font-bold">({events.length})</span>
-          </div>
-
-          {events.length > 0 && (
-            <span className="text-[#95CCDD] truncate max-w-xs sm:max-w-md hidden md:inline text-xs">
-              Latest: <span className="text-[#D0E7E6] font-semibold">{events[0].event}</span> @{' '}
-              {new Date(events[0].timestamp).toLocaleTimeString()}
-            </span>
-          )}
-
-          {isOpen ? (
-            <ChevronDown className="w-4 h-4 text-[#95CCDD] group-hover:text-white" />
-          ) : (
-            <ChevronUp className="w-4 h-4 text-[#95CCDD] group-hover:text-white" />
-          )}
-        </button>
-
+    <div className="flex flex-col h-full min-h-0 space-y-3">
+      {/* Header bar */}
+      <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#79D1C3]/40 shadow-xs shrink-0">
         <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#C9FDD7]/50 border border-[#79D1C3]/60 flex items-center justify-center shrink-0">
+            <Radio className="w-4 h-4 text-[#1b5e52] animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800 text-sm">WebSocket Live Feed</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-[#C9FDD7] text-[#164e43] border border-[#79D1C3]/50">
+                {events.length}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-mono hidden sm:block">
+              ws://localhost:4000/ws
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
           {events.length > 0 && (
             <button
               onClick={onClear}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0f1538] hover:bg-[#151e4d] text-[#D0E7E6] hover:text-white border border-[#1c2763] transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FCFB] hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-300 transition text-xs font-semibold shadow-xs"
               title="Clear event logs"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
               <span>Clear</span>
             </button>
           )}
-          <span className="text-xs text-[#95CCDD]/70 hidden sm:inline font-mono">
-            ws://localhost:4000/ws
-          </span>
         </div>
       </div>
 
-      {/* Expanded Log Drawer */}
-      {isOpen && (
-        <div className="max-h-64 overflow-y-auto px-4 py-3 space-y-2 border-t border-[#1c2763] bg-[#080c20] font-mono text-xs">
-          {events.length === 0 ? (
-            <div className="py-6 text-center text-[#95CCDD] flex flex-col items-center justify-center gap-2">
-              <Terminal className="w-5 h-5 text-[#4274D9]" />
-              <p className="text-xs font-semibold text-white">No WebSocket events received yet.</p>
-              <p className="text-xs text-[#95CCDD]">
-                Book a slot or block a slot to watch events broadcast live across sessions.
+      {/* Events Log List */}
+      <div className="flex-1 min-h-0 space-y-2.5 overflow-y-auto pr-1">
+        {events.length === 0 ? (
+          <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3 bg-white rounded-2xl border border-dashed border-[#79D1C3]/50 p-6">
+            <div className="w-12 h-12 rounded-2xl bg-[#C9FDD7]/40 border border-[#79D1C3]/40 flex items-center justify-center text-[#1b5e52]">
+              <Activity className="w-6 h-6 text-[#79D1C3]" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">No events broadcasted yet</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                Reserve a slot, cancel a booking, or toggle Lock / Unlock to inspect live real-time WebSocket payloads.
               </p>
             </div>
-          ) : (
-            events.map((evt, idx) => {
-              const isSlotEvent = evt.event === 'slotAvailabilityChanged';
-              return (
-                <div
-                  key={`${evt.timestamp}-${idx}`}
-                  className="p-2.5 rounded-xl bg-[#0f1538] border border-[#1c2763] hover:border-[#4274D9]/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                >
-                  <div className="flex items-start sm:items-center gap-2.5 flex-1 overflow-hidden">
+          </div>
+        ) : (
+          events.map((evt, idx) => {
+            const isSlotEvent = evt.event === 'slotAvailabilityChanged';
+            return (
+              <div
+                key={`${evt.timestamp}-${idx}`}
+                className="p-3.5 rounded-2xl bg-white border border-[#79D1C3]/35 hover:border-[#6892D5]/70 transition-all shadow-xs flex flex-col gap-2 shrink-0"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-mono font-semibold shrink-0 ${
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold tracking-wide border ${
                         isSlotEvent
-                          ? 'bg-[#293681] text-[#D0E7E6] border border-[#4274D9]/40'
-                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                          ? 'bg-[#C9FDD7] text-[#164e43] border-[#79D1C3]/60'
+                          : 'bg-[#6892D5]/15 text-[#244279] border-[#6892D5]/40'
                       }`}
                     >
                       {evt.event}
                     </span>
-                    <span className="text-xs text-[#95CCDD] shrink-0">
+                    <span className="text-xs font-mono text-slate-500">
                       {new Date(evt.timestamp).toLocaleTimeString()}.
                       {String(new Date(evt.timestamp).getMilliseconds()).padStart(3, '0')}
                     </span>
-                    <div className="text-slate-200 text-xs truncate font-mono">
-                      {JSON.stringify(evt.payload)}
-                    </div>
                   </div>
 
                   <button
                     onClick={() => copyEvent(evt, idx)}
-                    className="self-end sm:self-center text-[#95CCDD] hover:text-white transition shrink-0 p-1.5 rounded-lg hover:bg-[#151e4d]"
-                    title="Copy event payload"
+                    className="text-slate-400 hover:text-slate-700 transition p-1.5 rounded-lg hover:bg-[#F8FCFB] border border-transparent hover:border-slate-200"
+                    title="Copy event JSON payload"
                   >
                     {copiedIndex === idx ? (
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-600" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
                   </button>
                 </div>
-              );
-            })
-          )}
-        </div>
-      )}
+
+                <div className="p-2.5 rounded-xl bg-[#F8FCFB] border border-[#79D1C3]/20 text-xs font-mono text-slate-700 max-h-36 overflow-y-auto break-all">
+                  <pre className="whitespace-pre-wrap">{JSON.stringify(evt.payload, null, 2)}</pre>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };

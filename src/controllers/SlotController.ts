@@ -85,6 +85,8 @@ export class SlotController {
       };
       await slotRepo.save(slot);
 
+      await SlotController.bookingService.invalidateSlotCache(slot.venueId, slot.date);
+
       logger.info('Slot blocked by admin', {
         slotId: id,
         adminId: req.user!.userId,
@@ -123,8 +125,13 @@ export class SlotController {
         return;
       }
 
-      slot.status = SlotStatus.AVAILABLE;
+      slot.status = slot.remainingCapacity > 0 ? SlotStatus.AVAILABLE : SlotStatus.BOOKED;
+      if (slot.metadata) {
+        delete slot.metadata.blockReason;
+        delete slot.metadata.blockedBy;
+      }
       await slotRepo.save(slot);
+      await SlotController.bookingService.invalidateSlotCache(slot.venueId, slot.date);
 
       logger.info('Slot unblocked by admin', {
         slotId: id,

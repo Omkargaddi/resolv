@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 import ClientPane from './components/ClientPane';
-import WebSocketLog from './components/WebSocketLog';
 import { wsClient } from './services/websocket';
 import { WebSocketEvent, Venue } from './types';
 import { getVenuesApi } from './services/api';
-import { Radio, CalendarDays } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const [wsStatus, setWsStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error'>(
@@ -74,7 +73,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#080c20] text-slate-100 font-sans pb-16 antialiased">
+    <div className="min-h-screen flex flex-col bg-[#F8FCFB] text-slate-800 font-sans pb-12 antialiased">
       {/* Top Navigation */}
       <Header
         wsStatus={wsStatus}
@@ -83,16 +82,16 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-5">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-6">
         {/* Universal Single Day Picker (Synchronizes dates across all 3 client panes) */}
-        <div className="bg-[#0a0f2c] p-4 rounded-2xl border border-[#1c2763] shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#79D1C3]/35 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="w-10 h-10 rounded-xl bg-[#293681]/40 border border-[#4274D9]/40 flex items-center justify-center text-[#95CCDD] shrink-0">
-              <CalendarDays className="w-5 h-5 text-[#4274D9]" />
+            <div className="w-10 h-10 rounded-xl bg-[#C9FDD7]/60 border border-[#79D1C3]/50 flex items-center justify-center text-[#134e44] shrink-0">
+              <CalendarDays className="w-5 h-5 text-[#6892D5]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">Day Selector</span>
+                <span className="text-base font-bold text-slate-800">Day Selector</span>
               </div>
             </div>
           </div>
@@ -109,13 +108,13 @@ const AppContent: React.FC = () => {
                 <button
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`flex flex-col items-center px-4 py-2 rounded-xl text-xs font-semibold transition shrink-0 border ${
+                  className={`flex flex-col items-center px-4 py-2.5 rounded-xl text-xs font-semibold transition shrink-0 border ${
                     isSelected
-                      ? 'bg-[#4274D9] text-white border-[#4274D9] shadow-md shadow-[#4274D9]/30 font-bold scale-105'
-                      : 'bg-[#0f1538] hover:bg-[#151e4d] text-[#D0E7E6] hover:text-white border-[#1c2763]'
+                      ? 'bg-[#6892D5] text-white border-[#6892D5] shadow-md shadow-[#6892D5]/25 font-bold scale-105'
+                      : 'bg-[#F8FCFB] hover:bg-[#C9FDD7]/30 text-slate-700 hover:text-slate-900 border-[#79D1C3]/35'
                   }`}
                 >
-                  <span className="text-[11px] uppercase tracking-wider font-bold opacity-80">
+                  <span className="text-xs uppercase tracking-wider font-bold opacity-90">
                     {idx === 0 ? 'Today' : dayName}
                   </span>
                   <span className="font-mono text-sm mt-0.5">{monthDay}</span>
@@ -125,12 +124,10 @@ const AppContent: React.FC = () => {
           </div>
         </div>
 
-      
-
         {/* 3-Pane Side-by-Side Responsive Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* Client 1: User 1 (John Doe) */}
-          <div className="min-h-[760px] flex flex-col">
+          <div className="h-[780px] lg:h-[800px] flex flex-col">
             <ClientPane
               personaId="user1"
               venueId={activeVenue.id}
@@ -142,7 +139,7 @@ const AppContent: React.FC = () => {
           </div>
 
           {/* Client 2: User 2 (Alice Smith) */}
-          <div className="min-h-[760px] flex flex-col">
+          <div className="h-[780px] lg:h-[800px] flex flex-col">
             <ClientPane
               personaId="user2"
               venueId={activeVenue.id}
@@ -154,7 +151,7 @@ const AppContent: React.FC = () => {
           </div>
 
           {/* Client 3: System Admin */}
-          <div className="min-h-[760px] flex flex-col">
+          <div className="h-[780px] lg:h-[800px] flex flex-col">
             <ClientPane
               personaId="admin"
               venueId={activeVenue.id}
@@ -162,13 +159,12 @@ const AppContent: React.FC = () => {
               selectedDate={selectedDate}
               refreshTrigger={refreshTrigger}
               onDataMutated={handleDataMutated}
+              events={events}
+              onClearEvents={() => setEvents([])}
             />
           </div>
         </div>
       </main>
-
-      {/* Floating Real-Time WebSocket Log Drawer */}
-      <WebSocketLog events={events} onClear={() => setEvents([])} />
     </div>
   );
 };
