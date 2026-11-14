@@ -80,30 +80,30 @@ export const MyBookingsPanel: React.FC<MyBookingsPanelProps> = ({
   return (
     <div className="space-y-4">
       {/* Header & Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#080c20] p-4 rounded-2xl border border-[#1c2763]">
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
             <span>Reservations for {userName}</span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-slate-300">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#293681] text-[#D0E7E6]">
               {bookings.length}
             </span>
           </h4>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-[#95CCDD] mt-0.5">
             Real-time status tracking & instant seat reclamation
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Status Filter */}
-          <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-xs">
+          <div className="flex bg-[#0f1538] p-1 rounded-xl border border-[#1c2763] text-xs">
             {(['all', 'confirmed', 'cancelled'] as const).map((filter) => (
               <button
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
-                className={`px-2.5 py-1 rounded capitalize text-xs transition ${
+                className={`px-3 py-1.5 rounded-lg capitalize text-xs font-semibold transition ${
                   statusFilter === filter
-                    ? 'bg-indigo-600 text-white font-semibold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#4274D9] text-white shadow-sm'
+                    : 'text-[#95CCDD] hover:text-white'
                 }`}
               >
                 {filter}
@@ -114,38 +114,38 @@ export const MyBookingsPanel: React.FC<MyBookingsPanelProps> = ({
           <button
             onClick={fetchBookings}
             disabled={isLoading}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition"
+            className="p-2 rounded-xl bg-[#0f1538] hover:bg-[#151e4d] text-[#D0E7E6] hover:text-white border border-[#1c2763] transition shadow-sm"
             title="Refresh bookings"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-[#4274D9] ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {actionError && (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-xs text-rose-300 font-mono">
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300 font-mono">
           <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <span>{actionError}</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 font-mono">
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 font-mono">
           {error}
         </div>
       )}
 
       {/* Bookings List */}
       {isLoading && bookings.length === 0 ? (
-        <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2 font-mono">
-          <RefreshCw className="w-5 h-5 animate-spin text-indigo-400" />
+        <div className="py-16 text-center text-[#95CCDD] text-sm flex flex-col items-center justify-center gap-2.5 font-mono">
+          <RefreshCw className="w-5 h-5 animate-spin text-[#4274D9]" />
           <span>Loading reservations...</span>
         </div>
       ) : bookings.length === 0 ? (
-        <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2 bg-slate-950/40 rounded-xl border border-dashed border-slate-800">
-          <Search className="w-6 h-6 text-slate-600" />
-          <p className="font-semibold text-slate-400">No {statusFilter !== 'all' ? statusFilter : ''} bookings found</p>
-          <p className="text-[11px] text-slate-600">Select an available slot above to create a booking.</p>
+        <div className="py-16 text-center text-[#95CCDD] text-sm flex flex-col items-center justify-center gap-2.5 bg-[#080c20]/60 rounded-2xl border border-dashed border-[#1c2763]">
+          <Search className="w-6 h-6 text-[#4274D9]" />
+          <p className="font-semibold text-white">No {statusFilter !== 'all' ? statusFilter : ''} bookings found</p>
+          <p className="text-xs text-[#95CCDD]">Select an available slot above to create a booking.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -154,56 +154,56 @@ export const MyBookingsPanel: React.FC<MyBookingsPanelProps> = ({
             return (
               <div
                 key={booking.id}
-                className="p-3.5 rounded-xl bg-slate-900 border border-slate-800/80 hover:border-slate-700 transition space-y-3"
+                className="p-4 rounded-2xl bg-[#0f1538] border border-[#1c2763] hover:border-[#4274D9]/50 transition space-y-3.5 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-indigo-400">
+                      <span className="font-mono text-sm font-bold text-[#D0E7E6]">
                         {booking.confirmationCode}
                       </span>
                       <button
                         onClick={() => copyCode(booking.confirmationCode)}
-                        className="text-slate-500 hover:text-slate-300 transition"
+                        className="text-[#95CCDD] hover:text-white transition p-1"
                         title="Copy code"
                       >
                         {copiedCode === booking.confirmationCode ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
                         ) : (
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                           isConfirmed
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
                         }`}
                       >
                         {booking.status}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-500" />
+                    <div className="flex flex-wrap items-center gap-3.5 text-xs text-[#95CCDD] mt-2 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#4274D9]" />
                         {booking.bookingDate}
                       </span>
                       {booking.slot && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-[#4274D9]" />
                           {new Date(booking.slot.startTime).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </span>
                       )}
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-slate-500" />
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-[#4274D9]" />
                         {booking.guestCount} {booking.guestCount === 1 ? 'guest' : 'guests'}
                       </span>
                       {booking.totalPrice && (
-                        <span className="text-emerald-400 font-mono font-medium">
+                        <span className="text-emerald-400 font-mono font-bold text-sm">
                           ${booking.totalPrice}
                         </span>
                       )}

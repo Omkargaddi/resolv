@@ -8,7 +8,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 
 import { initializeDatabase, closeDatabase } from './config/database';
-import { globalRateLimiter } from './middleware/rateLimiter';
 import { QueueService } from './services/QueueService';
 import { WebSocketService } from './utils/websocket';
 import RedisClient from './utils/redis';
@@ -66,7 +65,7 @@ async function bootstrap(): Promise<void> {
   });
 
   // ─── API Routes ───────────────────────────────────────
-  app.use('/api', globalRateLimiter(), apiRouter);
+  app.use('/api', apiRouter);
 
   // 404 Handler
   app.use((_req: Request, res: Response) => {

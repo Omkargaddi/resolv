@@ -7,7 +7,6 @@ import {
   refreshAccessToken,
   AuthenticatedRequest,
 } from '../middleware/auth';
-import { consumeAuthRateLimit } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 
 export class AuthController {
@@ -77,8 +76,6 @@ export class AuthController {
         return;
       }
 
-      await consumeAuthRateLimit(`login:${email.toLowerCase().trim()}`);
-
       const userRepo = AppDataSource.getRepository(User);
       const user = await userRepo
         .createQueryBuilder('user')
@@ -117,14 +114,6 @@ export class AuthController {
         user: user.toJSON(),
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Too many login attempts')) {
-        res.status(429).json({
-          error: error.message,
-          code: 'RATE_LIMIT_EXCEEDED',
-        });
-        return;
-      }
-
       logger.error('Login failed', { error });
       res.status(500).json({
         error: 'An unexpected error occurred during login',

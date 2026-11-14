@@ -73,20 +73,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-lg bg-[#0a0f2c] border border-[#1c2763] rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#1c2763] bg-[#080c20]">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-[#4274D9]" />
               {confirmedBooking ? 'Booking Confirmed!' : 'Confirm Reservation'}
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">{venueName}</p>
+            <p className="text-xs text-[#95CCDD] mt-0.5">{venueName}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-[#95CCDD] hover:text-white hover:bg-[#151e4d] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -94,40 +94,40 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {confirmedBooking ? (
           /* Confirmation Success State */
-          <div className="p-6 space-y-6 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className="p-7 space-y-6 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 className="w-9 h-9" />
             </div>
 
-            <div className="space-y-1">
-              <h4 className="text-xl font-bold text-white">You're All Set!</h4>
-              <p className="text-xs text-slate-400">
+            <div className="space-y-1.5">
+              <h4 className="text-2xl font-bold text-white">You're All Set!</h4>
+              <p className="text-sm text-[#95CCDD]">
                 Your reservation has been locked into the system with zero double-booking guarantees.
               </p>
             </div>
 
             {/* Confirmation Code Box */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div className="p-4.5 rounded-2xl bg-[#080c20] border border-[#1c2763] flex items-center justify-between">
               <div className="text-left">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-xs uppercase tracking-wider text-[#95CCDD] font-mono font-semibold">
                   Confirmation Code
                 </span>
-                <div className="font-mono text-xl font-black text-indigo-400 tracking-wider">
+                <div className="font-mono text-2xl font-black text-[#4274D9] tracking-wider mt-0.5">
                   {confirmedBooking.confirmationCode}
                 </div>
               </div>
               <button
                 onClick={() => copyCode(confirmedBooking.confirmationCode)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0f1538] hover:bg-[#151e4d] text-white border border-[#1c2763] transition shadow-sm"
               >
                 {copiedCode ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <Check className="w-4 h-4 text-emerald-400" />
                     <span className="text-emerald-400">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4 text-[#95CCDD]" />
                     <span>Copy</span>
                   </>
                 )}
@@ -135,25 +135,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             {/* Booking Details Grid */}
-            <div className="grid grid-cols-2 gap-3 text-left text-xs bg-slate-950/40 p-4 rounded-xl border border-slate-800/60 font-mono">
+            <div className="grid grid-cols-2 gap-3.5 text-left text-xs bg-[#080c20]/60 p-4 rounded-2xl border border-[#1c2763] font-mono">
               <div>
-                <span className="text-slate-500">Date:</span>
-                <div className="text-slate-200 font-semibold">{slot.date}</div>
+                <span className="text-[#95CCDD]">Date:</span>
+                <div className="text-white font-semibold text-sm">{slot.date}</div>
               </div>
               <div>
-                <span className="text-slate-500">Guests:</span>
-                <div className="text-slate-200 font-semibold">{confirmedBooking.guestCount}</div>
+                <span className="text-[#95CCDD]">Guests:</span>
+                <div className="text-white font-semibold text-sm">{confirmedBooking.guestCount}</div>
               </div>
               <div>
-                <span className="text-slate-500">Time:</span>
-                <div className="text-slate-200 font-semibold">
+                <span className="text-[#95CCDD]">Time:</span>
+                <div className="text-white font-semibold text-sm">
                   {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
                   {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500">Total Price:</span>
-                <div className="text-emerald-400 font-semibold">
+                <span className="text-[#95CCDD]">Total Price:</span>
+                <div className="text-emerald-400 font-bold text-sm">
                   ${confirmedBooking.totalPrice || totalPrice} {slot.currency}
                 </div>
               </div>
@@ -161,7 +161,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             <button
               onClick={onClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition"
+              className="w-full py-3 rounded-2xl text-sm font-bold bg-[#4274D9] hover:bg-[#293681] text-white shadow-lg shadow-[#4274D9]/25 transition"
             >
               Done
             </button>
@@ -170,40 +170,40 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           /* Booking Form */
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             {error && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300">
+              <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
                 <div className="font-mono break-all">{error}</div>
               </div>
             )}
 
             {/* Slot Info Card */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <Clock className="w-3.5 h-3.5 text-indigo-400" />
-                  {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
+            <div className="p-4 rounded-2xl bg-[#080c20] border border-[#1c2763] space-y-2.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-white font-semibold">
+                  <Clock className="w-4 h-4 text-[#4274D9]" />
+                  {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
                   {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {slot.remainingCapacity} seats available
+                <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  {slot.remainingCapacity} seats left
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-800/60">
+              <div className="flex items-center justify-between text-xs text-[#95CCDD] pt-2 border-t border-[#1c2763]">
                 <span>Date: {slot.date}</span>
-                <span className="font-semibold text-slate-200">
+                <span className="font-bold text-white font-mono text-sm">
                   ${pricePerGuest} / person
                 </span>
               </div>
             </div>
 
             {/* Guest Count Stepper */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-white flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
+                  <Users className="w-4 h-4 text-[#4274D9]" />
                   Party Size (Guests)
                 </span>
-                <span className="text-[11px] text-slate-500 font-normal">
+                <span className="text-xs text-[#95CCDD] font-normal">
                   Max: {slot.remainingCapacity}
                 </span>
               </label>
@@ -212,18 +212,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   type="button"
                   onClick={() => setGuestCount((c) => Math.max(1, c - 1))}
                   disabled={guestCount <= 1}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 font-bold text-lg flex items-center justify-center border border-slate-700 transition"
+                  className="w-11 h-11 rounded-2xl bg-[#0f1538] hover:bg-[#151e4d] disabled:opacity-40 text-white font-bold text-xl flex items-center justify-center border border-[#1c2763] transition"
                 >
                   -
                 </button>
-                <div className="flex-1 py-2 text-center font-mono font-bold text-lg bg-slate-950 border border-slate-800 rounded-xl text-white">
+                <div className="flex-1 py-2.5 text-center font-mono font-bold text-xl bg-[#080c20] border border-[#1c2763] rounded-2xl text-white">
                   {guestCount}
                 </div>
                 <button
                   type="button"
                   onClick={() => setGuestCount((c) => Math.min(slot.remainingCapacity, c + 1))}
                   disabled={guestCount >= slot.remainingCapacity}
-                  className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 font-bold text-lg flex items-center justify-center border border-slate-700 transition"
+                  className="w-11 h-11 rounded-2xl bg-[#0f1538] hover:bg-[#151e4d] disabled:opacity-40 text-white font-bold text-xl flex items-center justify-center border border-[#1c2763] transition"
                 >
                   +
                 </button>
@@ -231,8 +231,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             {/* Notes Input */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-white">
                 Special Requests & Notes (Optional)
               </label>
               <input
@@ -241,17 +241,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 maxLength={200}
-                className="w-full px-3.5 py-2 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition"
+                className="w-full px-4 py-2.5 rounded-2xl text-xs bg-[#080c20] border border-[#1c2763] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#4274D9] transition"
               />
             </div>
 
             {/* Summary & Price Total */}
-            <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-indigo-300">
-                <CreditCard className="w-4 h-4 text-indigo-400" />
-                <span>Total Amount:</span>
+            <div className="p-3.5 rounded-2xl bg-[#293681]/30 border border-[#4274D9]/40 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-[#D0E7E6]">
+                <CreditCard className="w-4 h-4 text-[#4274D9]" />
+                <span className="font-semibold">Total Amount:</span>
               </div>
-              <div className="text-base font-bold text-indigo-400 font-mono">
+              <div className="text-lg font-bold text-[#D0E7E6] font-mono">
                 ${totalPrice.toFixed(2)} {slot.currency}
               </div>
             </div>
@@ -261,18 +261,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-1/3 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                className="w-1/3 py-3 rounded-2xl text-xs font-semibold bg-[#0f1538] hover:bg-[#151e4d] text-[#D0E7E6] border border-[#1c2763] transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || slot.remainingCapacity < guestCount}
-                className="w-2/3 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
+                className="w-2/3 py-3 rounded-2xl text-xs font-bold bg-[#4274D9] hover:bg-[#293681] disabled:opacity-50 text-white shadow-lg shadow-[#4274D9]/25 transition flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     Acquiring Lock & Reserving...
                   </span>
                 ) : (

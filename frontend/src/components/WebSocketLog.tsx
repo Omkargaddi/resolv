@@ -18,45 +18,45 @@ export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) =
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 shadow-2xl transition-all">
+    <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#080c20]/95 backdrop-blur-md border-t border-[#1c2763] shadow-xl transition-all">
       {/* Ticker / Header bar */}
-      <div className="px-4 py-2 flex items-center justify-between text-xs font-mono">
+      <div className="px-4 py-2.5 flex items-center justify-between text-xs font-mono">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 text-slate-300 hover:text-white transition group"
+          className="flex items-center gap-3 text-[#D0E7E6] hover:text-white transition group"
         >
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
-            <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span className="font-semibold text-slate-200">WebSocket Live Stream</span>
-            <span className="text-slate-400">({events.length})</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[#0f1538] border border-[#1c2763]">
+            <Radio className="w-3.5 h-3.5 text-[#4274D9] animate-pulse" />
+            <span className="font-semibold text-white text-xs">WebSocket Live Stream</span>
+            <span className="text-[#95CCDD] text-xs font-bold">({events.length})</span>
           </div>
 
           {events.length > 0 && (
-            <span className="text-slate-400 truncate max-w-xs sm:max-w-md hidden md:inline">
-              Latest: <span className="text-cyan-300">{events[0].event}</span> @{' '}
+            <span className="text-[#95CCDD] truncate max-w-xs sm:max-w-md hidden md:inline text-xs">
+              Latest: <span className="text-[#D0E7E6] font-semibold">{events[0].event}</span> @{' '}
               {new Date(events[0].timestamp).toLocaleTimeString()}
             </span>
           )}
 
           {isOpen ? (
-            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white" />
+            <ChevronDown className="w-4 h-4 text-[#95CCDD] group-hover:text-white" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white" />
+            <ChevronUp className="w-4 h-4 text-[#95CCDD] group-hover:text-white" />
           )}
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {events.length > 0 && (
             <button
               onClick={onClear}
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0f1538] hover:bg-[#151e4d] text-[#D0E7E6] hover:text-white border border-[#1c2763] transition text-xs font-medium"
               title="Clear event logs"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
               <span>Clear</span>
             </button>
           )}
-          <span className="text-[11px] text-slate-500 hidden sm:inline">
+          <span className="text-xs text-[#95CCDD]/70 hidden sm:inline font-mono">
             ws://localhost:4000/ws
           </span>
         </div>
@@ -64,13 +64,13 @@ export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) =
 
       {/* Expanded Log Drawer */}
       {isOpen && (
-        <div className="max-h-72 overflow-y-auto px-4 py-2 space-y-2 border-t border-slate-800/80 bg-slate-950 font-mono text-xs">
+        <div className="max-h-64 overflow-y-auto px-4 py-3 space-y-2 border-t border-[#1c2763] bg-[#080c20] font-mono text-xs">
           {events.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
-              <Terminal className="w-6 h-6 text-slate-600" />
-              <p>No WebSocket events received yet.</p>
-              <p className="text-[11px] text-slate-600">
-                Book a slot, cancel a reservation, or block a slot to watch events broadcast live!
+            <div className="py-6 text-center text-[#95CCDD] flex flex-col items-center justify-center gap-2">
+              <Terminal className="w-5 h-5 text-[#4274D9]" />
+              <p className="text-xs font-semibold text-white">No WebSocket events received yet.</p>
+              <p className="text-xs text-[#95CCDD]">
+                Book a slot or block a slot to watch events broadcast live across sessions.
               </p>
             </div>
           ) : (
@@ -79,42 +79,36 @@ export const WebSocketLog: React.FC<WebSocketLogProps> = ({ events, onClear }) =
               return (
                 <div
                   key={`${evt.timestamp}-${idx}`}
-                  className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/80 hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  className="p-2.5 rounded-xl bg-[#0f1538] border border-[#1c2763] hover:border-[#4274D9]/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div className="flex items-start sm:items-center gap-2.5 flex-1 overflow-hidden">
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                      className={`px-2 py-0.5 rounded-full text-xs font-mono font-semibold shrink-0 ${
                         isSlotEvent
-                          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30'
+                          ? 'bg-[#293681] text-[#D0E7E6] border border-[#4274D9]/40'
+                          : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                       }`}
                     >
                       {evt.event}
                     </span>
-                    <span className="text-[11px] text-slate-400 shrink-0">
+                    <span className="text-xs text-[#95CCDD] shrink-0">
                       {new Date(evt.timestamp).toLocaleTimeString()}.
                       {String(new Date(evt.timestamp).getMilliseconds()).padStart(3, '0')}
                     </span>
-                    <div className="text-slate-300 text-xs truncate font-mono">
+                    <div className="text-slate-200 text-xs truncate font-mono">
                       {JSON.stringify(evt.payload)}
                     </div>
                   </div>
 
                   <button
                     onClick={() => copyEvent(evt, idx)}
-                    className="self-end sm:self-center shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition"
+                    className="self-end sm:self-center text-[#95CCDD] hover:text-white transition shrink-0 p-1.5 rounded-lg hover:bg-[#151e4d]"
                     title="Copy event payload"
                   >
                     {copiedIndex === idx ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-emerald-400">Copied</span>
-                      </>
+                      <Check className="w-4 h-4 text-emerald-400" />
                     ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Copy</span>
-                      </>
+                      <Copy className="w-4 h-4" />
                     )}
                   </button>
                 </div>

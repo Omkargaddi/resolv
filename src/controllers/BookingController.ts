@@ -5,7 +5,6 @@ import { UserRole } from '../models/User';
 import { BookingStatus } from '../models/Booking';
 import { BookingService, BookingError } from '../services/BookingService';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { consumeMutationRateLimit } from '../middleware/rateLimiter';
 import { WebSocketService } from '../utils/websocket';
 import { logger } from '../utils/logger';
 
@@ -23,8 +22,6 @@ export class BookingController {
         });
         return;
       }
-
-      await consumeMutationRateLimit(`booking:create:${req.user!.userId}`);
 
       const booking = await BookingController.bookingService.createBooking({
         userId: req.user!.userId,

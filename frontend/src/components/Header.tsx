@@ -1,24 +1,17 @@
 import React from 'react';
 import {
-  Layers,
-  Zap,
   Radio,
-  Server,
   RefreshCw,
 } from 'lucide-react';
 import { wsClient } from '../services/websocket';
 
 interface HeaderProps {
-  viewMode: 'split' | 'single' | 'concurrency';
-  setViewMode: (mode: 'split' | 'single' | 'concurrency') => void;
   wsStatus: 'connected' | 'connecting' | 'disconnected' | 'error';
   eventCount: number;
   onRefreshAll: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  viewMode,
-  setViewMode,
   wsStatus,
   eventCount,
   onRefreshAll,
@@ -27,112 +20,75 @@ export const Header: React.FC<HeaderProps> = ({
     switch (wsStatus) {
       case 'connected':
         return (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            WS LIVE
+            Live Sync
           </span>
         );
       case 'connecting':
         return (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            WS CONNECTING
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            Connecting
           </span>
         );
       default:
         return (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
             <span className="w-2 h-2 rounded-full bg-rose-400" />
-            WS OFFLINE
+            Offline
           </span>
         );
     }
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 sm:px-6">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-[#080c20]/95 backdrop-blur-md border-b border-[#1c2763] px-4 py-3 sm:px-6 shadow-lg shadow-black/20">
+      <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
         {/* Brand & System Status */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-indigo-400 text-lg tracking-tighter">
-                R
-              </div>
+            {/* Transparent Brand Logo in clean high-contrast container */}
+            <div className="bg-white/95 px-3 py-1 rounded-xl shadow-md border border-white/30 flex items-center hover:bg-white transition">
+              <img
+                src="/logo_transparent.png"
+                alt="Resolv"
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
             </div>
-            <div>
+
+            <div className="hidden sm:block">
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-lg text-white tracking-tight">Resolv</h1>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold text-[#D0E7E6] bg-[#293681]/70 border border-[#4274D9]/40">
                   v2.4.1
                 </span>
+                <span className="text-xs font-medium text-[#95CCDD]">
+                  Enterprise Booking Platform
+                </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Distributed Lock & Real-Time Booking Engine
-              </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 md:ml-4">
-            {getStatusBadge()}
-            <button
-              onClick={() => wsClient.connect()}
-              title="WebSocket Events Received"
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono bg-slate-800/80 text-slate-300 border border-slate-700/60 hover:border-slate-600 transition"
-            >
-              <Radio className="w-3 h-3 text-cyan-400" />
-              <span>{eventCount} events</span>
-            </button>
-          </div>
         </div>
 
-        {/* View Mode Navigation Switcher */}
-        <div className="flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-inner w-full md:w-auto justify-center">
-          <button
-            onClick={() => setViewMode('split')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              viewMode === 'split'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Multi-Split Arena</span>
-          </button>
+        {/* Live WebSocket Event Counter & Sync Controls */}
+        <div className="flex items-center gap-3">
+          {getStatusBadge()}
 
           <button
-            onClick={() => setViewMode('single')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              viewMode === 'single'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-            }`}
+            onClick={() => wsClient.connect()}
+            title="WebSocket Events Streamed"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono font-medium text-[#D0E7E6] bg-[#0f1538] hover:bg-[#151e4d] border border-[#1c2763] hover:border-[#4274D9]/60 transition shadow-sm"
           >
-            <Server className="w-3.5 h-3.5" />
-            <span>Single Client View</span>
+            <Radio className="w-3.5 h-3.5 text-[#4274D9]" />
+            <span>{eventCount} events</span>
           </button>
 
-          <button
-            onClick={() => setViewMode('concurrency')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              viewMode === 'concurrency'
-                ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-amber-400 hover:bg-slate-900/60'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span>⚡ Concurrency & Edge Cases</span>
-          </button>
-        </div>
-
-        {/* Quick Refresh & Stats */}
-        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={onRefreshAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-            title="Refresh active slots and data"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#293681] hover:bg-[#4274D9] text-white border border-[#4274D9]/50 transition shadow-sm hover:shadow-[#4274D9]/25"
+            title="Refresh slots and bookings"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+            <RefreshCw className="w-3.5 h-3.5 text-[#D0E7E6]" />
             <span>Sync</span>
           </button>
         </div>
