@@ -127,10 +127,7 @@ func GenerateConfirmationCode() string {
 }
 
 func (b *Booking) IsCancellable() bool {
-	if b.Status == BookingStatusCancelled || b.Status == BookingStatusCompleted {
-		return false
-	}
-	return true
+	return b.Status != BookingStatusCancelled && b.Status != BookingStatusCompleted
 }
 
 type Venue struct {

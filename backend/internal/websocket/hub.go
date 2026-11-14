@@ -35,7 +35,6 @@ type Hub struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
-	mu         sync.RWMutex
 }
 
 var (
@@ -60,22 +59,17 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.mu.Lock()
 			h.clients[client] = true
-			h.mu.Unlock()
 			log.Println("[DEBUG] WebSocket client connected")
 
 		case client := <-h.unregister:
-			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 				log.Println("[DEBUG] WebSocket client disconnected")
 			}
-			h.mu.Unlock()
 
 		case message := <-h.broadcast:
-			h.mu.RLock()
 			for client := range h.clients {
 				select {
 				case client.send <- message:
@@ -84,7 +78,6 @@ func (h *Hub) run() {
 					delete(h.clients, client)
 				}
 			}
-			h.mu.RUnlock()
 		}
 	}
 }

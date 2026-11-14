@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -80,14 +81,13 @@ func (a *AuthManager) GenerateTokens(user *models.User) (string, string, error) 
 	return accessToken, refreshToken, nil
 }
 
-func (a *AuthManager) VerifyAccessToken(tokenString string) (*AuthPayload, error) {
+func (a *AuthManager) parseTokenClaims(tokenString string, options ...jwt.ParserOption) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return []byte(a.cfg.JWTSecret), nil
-	}, jwt.WithIssuer("reserve-api"), jwt.WithAudience("reserve-client"))
-
+	}, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +95,14 @@ func (a *AuthManager) VerifyAccessToken(tokenString string) (*AuthPayload, error
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token claims")
+	}
+	return claims, nil
+}
+
+func (a *AuthManager) VerifyAccessToken(tokenString string) (*AuthPayload, error) {
+	claims, err := a.parseTokenClaims(tokenString, jwt.WithIssuer("reserve-api"), jwt.WithAudience("reserve-client"))
+	if err != nil {
+		return nil, err
 	}
 
 	return &AuthPayload{
@@ -105,19 +113,11 @@ func (a *AuthManager) VerifyAccessToken(tokenString string) (*AuthPayload, error
 }
 
 func (a *AuthManager) VerifyRefreshToken(tokenString string) (string, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-		}
-		return []byte(a.cfg.JWTSecret), nil
-	}, jwt.WithIssuer("reserve-api"))
-
+	claims, err := a.parseTokenClaims(tokenString, jwt.WithIssuer("reserve-api"))
 	if err != nil {
 		return "", err
 	}
-
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok || !token.Valid || claims.TokenType != "refresh" {
+	if claims.TokenType != "refresh" {
 		return "", errors.New("invalid refresh token")
 	}
 
@@ -168,15 +168,7 @@ func AuthorizeRole(roles ...models.UserRole) func(http.Handler) http.Handler {
 				return
 			}
 
-			allowed := false
-			for _, role := range roles {
-				if user.Role == role {
-					allowed = true
-					break
-				}
-			}
-
-			if !allowed {
+			if !slices.Contains(roles, user.Role) {
 				rolesStr := make([]string, len(roles))
 				for i, r := range roles {
 					rolesStr[i] = string(r)

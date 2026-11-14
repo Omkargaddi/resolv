@@ -69,15 +69,23 @@ func (h *BookingHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		Notes:      req.Notes,
 	})
 	if err != nil {
-		if bErr, ok := err.(*services.BookingError); ok {
-			RenderError(w, bErr.StatusCode, bErr.Message, bErr.Code)
-			return
-		}
-		RenderError(w, http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR")
+		RenderServiceError(w, err, err.Error())
 		return
 	}
 
 	RenderJSON(w, http.StatusCreated, booking)
+}
+
+func parsePagination(r *http.Request) (int, int) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 {
+		limit = 20
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offset < 0 {
+		offset = 0
+	}
+	return limit, offset
 }
 
 func (h *BookingHandler) GetMyBookings(w http.ResponseWriter, r *http.Request) {
@@ -87,22 +95,13 @@ func (h *BookingHandler) GetMyBookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusStr := r.URL.Query().Get("status")
 	var status *models.BookingStatus
-	if statusStr != "" {
+	if statusStr := r.URL.Query().Get("status"); statusStr != "" {
 		st := models.BookingStatus(statusStr)
 		status = &st
 	}
 
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if limit <= 0 {
-		limit = 20
-	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	if offset < 0 {
-		offset = 0
-	}
-
+	limit, offset := parsePagination(r)
 	bookings, total, err := h.bookingService.GetBookingsByUser(r.Context(), user.UserID, status, limit, offset)
 	if err != nil {
 		RenderError(w, http.StatusInternalServerError, "Failed to retrieve bookings", "INTERNAL_SERVER_ERROR")
@@ -121,15 +120,14 @@ func (h *BookingHandler) GetMyBookings(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *BookingHandler) GetBookingByID(w http.ResponseWriter, r *http.Request) {
+func (h *BookingHandler) respondBooking(w http.ResponseWriter, r *http.Request, fetch func() (*models.Booking, error)) {
 	user := middleware.GetUserFromContext(r.Context())
 	if user == nil {
 		RenderError(w, http.StatusUnauthorized, "Authentication required", "UNAUTHORIZED")
 		return
 	}
 
-	id := chi.URLParam(r, "id")
-	booking, err := h.bookingService.GetBookingByID(r.Context(), id)
+	booking, err := fetch()
 	if err != nil {
 		RenderError(w, http.StatusInternalServerError, "Failed to retrieve booking", "INTERNAL_SERVER_ERROR")
 		return
@@ -147,30 +145,16 @@ func (h *BookingHandler) GetBookingByID(w http.ResponseWriter, r *http.Request) 
 	RenderJSON(w, http.StatusOK, booking)
 }
 
+func (h *BookingHandler) GetBookingByID(w http.ResponseWriter, r *http.Request) {
+	h.respondBooking(w, r, func() (*models.Booking, error) {
+		return h.bookingService.GetBookingByID(r.Context(), chi.URLParam(r, "id"))
+	})
+}
+
 func (h *BookingHandler) GetBookingByCode(w http.ResponseWriter, r *http.Request) {
-	user := middleware.GetUserFromContext(r.Context())
-	if user == nil {
-		RenderError(w, http.StatusUnauthorized, "Authentication required", "UNAUTHORIZED")
-		return
-	}
-
-	code := chi.URLParam(r, "code")
-	booking, err := h.bookingService.GetBookingByCode(r.Context(), code)
-	if err != nil {
-		RenderError(w, http.StatusInternalServerError, "Failed to retrieve booking", "INTERNAL_SERVER_ERROR")
-		return
-	}
-	if booking == nil {
-		RenderError(w, http.StatusNotFound, "Booking not found", "NOT_FOUND")
-		return
-	}
-
-	if booking.UserID != user.UserID && user.Role != models.UserRoleAdmin {
-		RenderError(w, http.StatusForbidden, "Not authorized to view this booking", "FORBIDDEN")
-		return
-	}
-
-	RenderJSON(w, http.StatusOK, booking)
+	h.respondBooking(w, r, func() (*models.Booking, error) {
+		return h.bookingService.GetBookingByCode(r.Context(), chi.URLParam(r, "code"))
+	})
 }
 
 func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
@@ -191,11 +175,7 @@ func (h *BookingHandler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 		Reason:    req.Reason,
 	})
 	if err != nil {
-		if bErr, ok := err.(*services.BookingError); ok {
-			RenderError(w, bErr.StatusCode, bErr.Message, bErr.Code)
-			return
-		}
-		RenderError(w, http.StatusInternalServerError, err.Error(), "INTERNAL_SERVER_ERROR")
+		RenderServiceError(w, err, err.Error())
 		return
 	}
 

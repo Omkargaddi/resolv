@@ -66,11 +66,7 @@ func (h *SlotHandler) BlockSlot(w http.ResponseWriter, r *http.Request) {
 
 	slot, err := h.bookingService.BlockSlot(r.Context(), id, user.UserID, req.Reason)
 	if err != nil {
-		if bErr, ok := err.(*services.BookingError); ok {
-			RenderError(w, bErr.StatusCode, bErr.Message, bErr.Code)
-			return
-		}
-		RenderError(w, http.StatusInternalServerError, "Failed to block slot", "INTERNAL_SERVER_ERROR")
+		RenderServiceError(w, err, "Failed to block slot")
 		return
 	}
 
@@ -83,11 +79,7 @@ func (h *SlotHandler) UnblockSlot(w http.ResponseWriter, r *http.Request) {
 
 	slot, err := h.bookingService.UnblockSlot(r.Context(), id, user.UserID)
 	if err != nil {
-		if bErr, ok := err.(*services.BookingError); ok {
-			RenderError(w, bErr.StatusCode, bErr.Message, bErr.Code)
-			return
-		}
-		RenderError(w, http.StatusInternalServerError, "Failed to unblock slot", "INTERNAL_SERVER_ERROR")
+		RenderServiceError(w, err, "Failed to unblock slot")
 		return
 	}
 

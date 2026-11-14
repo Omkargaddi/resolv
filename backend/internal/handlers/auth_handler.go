@@ -126,6 +126,27 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+const userColumnsWithSecrets = "id, name, email, password, phone, role, is_active, refresh_token, last_login_at, created_at, updated_at"
+
+func scanUserWithSecrets(row pgx.Row) (*models.User, *string, error) {
+	var user models.User
+	var phone, refreshToken *string
+	var lastLoginAt *time.Time
+
+	err := row.Scan(
+		&user.ID, &user.Name, &user.Email, &user.Password, &phone,
+		&user.Role, &user.IsActive, &refreshToken, &lastLoginAt,
+		&user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	user.Phone = phone
+	user.RefreshToken = refreshToken
+	user.LastLoginAt = lastLoginAt
+	return &user, refreshToken, nil
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -139,20 +160,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
-	var phone, refreshToken *string
-	var lastLoginAt *time.Time
-
-	query := `
-		SELECT id, name, email, password, phone, role, is_active, refresh_token, last_login_at, created_at, updated_at
-		FROM users
-		WHERE email = $1 AND is_active = true
-	`
-	err := h.db.Pool.QueryRow(r.Context(), query, req.Email).Scan(
-		&user.ID, &user.Name, &user.Email, &user.Password, &phone,
-		&user.Role, &user.IsActive, &refreshToken, &lastLoginAt,
-		&user.CreatedAt, &user.UpdatedAt,
-	)
+	query := "SELECT " + userColumnsWithSecrets + " FROM users WHERE email = $1 AND is_active = true"
+	user, _, err := scanUserWithSecrets(h.db.Pool.QueryRow(r.Context(), query, req.Email))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			RenderError(w, http.StatusUnauthorized, "Invalid email or password", "UNAUTHORIZED")
@@ -162,14 +171,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RenderError(w, http.StatusInternalServerError, "An unexpected error occurred during login", "INTERNAL_SERVER_ERROR")
 		return
 	}
-	user.Phone = phone
 
 	if !user.ComparePassword(req.Password) {
 		RenderError(w, http.StatusUnauthorized, "Invalid email or password", "UNAUTHORIZED")
 		return
 	}
 
-	accessToken, newRefreshToken, err := h.authManager.GenerateTokens(&user)
+	accessToken, newRefreshToken, err := h.authManager.GenerateTokens(user)
 	if err != nil {
 		log.Printf("[ERROR] Token generation failed: %v", err)
 		RenderError(w, http.StatusInternalServerError, "Failed to generate tokens", "INTERNAL_SERVER_ERROR")
@@ -184,7 +192,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	RenderJSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
-		User:         &user,
+		User:         user,
 	})
 }
 
@@ -201,26 +209,14 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
-	var phone, storedRefreshToken *string
-	var lastLoginAt *time.Time
-
-	query := `
-		SELECT id, name, email, password, phone, role, is_active, refresh_token, last_login_at, created_at, updated_at
-		FROM users
-		WHERE id = $1 AND is_active = true
-	`
-	err = h.db.Pool.QueryRow(r.Context(), query, userID).Scan(
-		&user.ID, &user.Name, &user.Email, &user.Password, &phone,
-		&user.Role, &user.IsActive, &storedRefreshToken, &lastLoginAt,
-		&user.CreatedAt, &user.UpdatedAt,
-	)
+	query := "SELECT " + userColumnsWithSecrets + " FROM users WHERE id = $1 AND is_active = true"
+	user, storedRefreshToken, err := scanUserWithSecrets(h.db.Pool.QueryRow(r.Context(), query, userID))
 	if err != nil || storedRefreshToken == nil || *storedRefreshToken != req.RefreshToken {
 		RenderError(w, http.StatusUnauthorized, "Invalid or expired refresh token", "UNAUTHORIZED")
 		return
 	}
 
-	accessToken, newRefreshToken, err := h.authManager.GenerateTokens(&user)
+	accessToken, newRefreshToken, err := h.authManager.GenerateTokens(user)
 	if err != nil {
 		RenderError(w, http.StatusInternalServerError, "Failed to generate tokens", "INTERNAL_SERVER_ERROR")
 		return
@@ -289,11 +285,11 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Name != nil {
-		_, _ = h.db.Pool.Exec(r.Context(), "UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2", *req.Name, userPayload.UserID)
-	}
-	if req.Phone != nil {
-		_, _ = h.db.Pool.Exec(r.Context(), "UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2", *req.Phone, userPayload.UserID)
+	if req.Name != nil || req.Phone != nil {
+		_, _ = h.db.Pool.Exec(r.Context(),
+			"UPDATE users SET name = COALESCE($1, name), phone = COALESCE($2, phone), updated_at = NOW() WHERE id = $3",
+			req.Name, req.Phone, userPayload.UserID,
+		)
 	}
 
 	h.GetMe(w, r)

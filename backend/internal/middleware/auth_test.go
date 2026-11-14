@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -86,5 +88,45 @@ func TestVerifyInvalidToken(t *testing.T) {
 	_, err := authMgr.VerifyAccessToken("invalid.token.structure")
 	if err == nil {
 		t.Errorf("expected error when verifying invalid token")
+	}
+}
+
+func TestAuthorizeRole(t *testing.T) {
+	mw := AuthorizeRole(models.UserRoleAdmin)
+
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Missing user context -> 401
+	req1, _ := http.NewRequest("GET", "/", nil)
+	rec1 := httptest.NewRecorder()
+	mw(dummyHandler).ServeHTTP(rec1, req1)
+	if rec1.Code != http.StatusUnauthorized {
+		t.Errorf("expected status 401, got %d", rec1.Code)
+	}
+
+	// Member role trying to access admin -> 403
+	req2, _ := http.NewRequest("GET", "/", nil)
+	ctx2 := context.WithValue(req2.Context(), UserContextKey, &AuthPayload{
+		UserID: "user-123",
+		Role:   models.UserRoleMember,
+	})
+	rec2 := httptest.NewRecorder()
+	mw(dummyHandler).ServeHTTP(rec2, req2.WithContext(ctx2))
+	if rec2.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", rec2.Code)
+	}
+
+	// Admin role -> 200
+	req3, _ := http.NewRequest("GET", "/", nil)
+	ctx3 := context.WithValue(req3.Context(), UserContextKey, &AuthPayload{
+		UserID: "admin-123",
+		Role:   models.UserRoleAdmin,
+	})
+	rec3 := httptest.NewRecorder()
+	mw(dummyHandler).ServeHTTP(rec3, req3.WithContext(ctx3))
+	if rec3.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec3.Code)
 	}
 }

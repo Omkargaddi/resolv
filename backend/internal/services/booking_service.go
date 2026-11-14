@@ -51,6 +51,105 @@ type CancelBookingInput struct {
 	Reason    *string
 }
 
+const (
+	slotColumns = "id, venue_id, date::text, start_time, end_time, capacity, remaining_capacity, status, duration_minutes, price, currency, metadata, held_until, created_at, updated_at"
+
+	bookingWithSlotColumns = `b.id, b.user_id, b.slot_id, b.venue_id, b.confirmation_code, b.status, b.guest_count, b.notes,
+		b.booking_date::text, b.confirmed_at, b.cancelled_at, b.cancellation_reason, b.completed_at,
+		b.total_price, b.metadata, b.created_at, b.updated_at,
+		s.id, s.venue_id, s.date::text, s.start_time, s.end_time, s.capacity, s.remaining_capacity,
+		s.status, s.duration_minutes, s.price, s.currency, s.metadata, s.held_until, s.created_at, s.updated_at`
+)
+
+type rowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func scanSlot(scanner rowScanner) (*models.Slot, error) {
+	var slot models.Slot
+	var price *float64
+	var metadataBytes []byte
+	var heldUntil *time.Time
+
+	err := scanner.Scan(
+		&slot.ID, &slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime,
+		&slot.Capacity, &slot.RemainingCapacity, &slot.Status, &slot.DurationMinutes,
+		&price, &slot.Currency, &metadataBytes, &heldUntil,
+		&slot.CreatedAt, &slot.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	slot.Price = price
+	slot.HeldUntil = heldUntil
+	if len(metadataBytes) > 0 {
+		_ = json.Unmarshal(metadataBytes, &slot.Metadata)
+	}
+	return &slot, nil
+}
+
+func scanBookingWithSlot(scanner rowScanner) (*models.Booking, error) {
+	var b models.Booking
+	var notes, cancellationReason *string
+	var confirmedAt, cancelledAt, completedAt *time.Time
+	var totalPrice *float64
+	var bMetaBytes []byte
+
+	var sID, sVenueID, sDate, sCurrency *string
+	var sStartTime, sEndTime, sCreatedAt, sUpdatedAt *time.Time
+	var sCapacity, sRemaining, sDuration *int
+	var sStatus *models.SlotStatus
+	var sPrice *float64
+	var sHeldUntil *time.Time
+	var sMetaBytes []byte
+
+	err := scanner.Scan(
+		&b.ID, &b.UserID, &b.SlotID, &b.VenueID, &b.ConfirmationCode, &b.Status, &b.GuestCount, &notes,
+		&b.BookingDate, &confirmedAt, &cancelledAt, &cancellationReason, &completedAt,
+		&totalPrice, &bMetaBytes, &b.CreatedAt, &b.UpdatedAt,
+		&sID, &sVenueID, &sDate, &sStartTime, &sEndTime, &sCapacity, &sRemaining,
+		&sStatus, &sDuration, &sPrice, &sCurrency, &sMetaBytes, &sHeldUntil, &sCreatedAt, &sUpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	b.Notes = notes
+	b.ConfirmedAt = confirmedAt
+	b.CancelledAt = cancelledAt
+	b.CancellationReason = cancellationReason
+	b.CompletedAt = completedAt
+	b.TotalPrice = totalPrice
+	if len(bMetaBytes) > 0 {
+		_ = json.Unmarshal(bMetaBytes, &b.Metadata)
+	}
+
+	if sID != nil {
+		slot := &models.Slot{
+			ID:                *sID,
+			VenueID:           *sVenueID,
+			Date:              *sDate,
+			StartTime:         *sStartTime,
+			EndTime:           *sEndTime,
+			Capacity:          *sCapacity,
+			RemainingCapacity: *sRemaining,
+			Status:            *sStatus,
+			DurationMinutes:   *sDuration,
+			Price:             sPrice,
+			Currency:          *sCurrency,
+			HeldUntil:         sHeldUntil,
+			CreatedAt:         *sCreatedAt,
+			UpdatedAt:         *sUpdatedAt,
+		}
+		if len(sMetaBytes) > 0 {
+			_ = json.Unmarshal(sMetaBytes, &slot.Metadata)
+		}
+		b.Slot = slot
+	}
+
+	return &b, nil
+}
+
 type BookingService struct {
 	db       *database.DB
 	redis    *redis.Client
@@ -133,33 +232,12 @@ func (s *BookingService) CreateBooking(ctx context.Context, input CreateBookingI
 	}
 
 	// Lock slot with SELECT ... FOR UPDATE
-	var slot models.Slot
-	var price *float64
-	var metadataBytes []byte
-	var heldUntil *time.Time
-
-	slotQuery := `
-		SELECT id, venue_id, date::text, start_time, end_time, capacity, remaining_capacity, status, duration_minutes, price, currency, metadata, held_until, created_at, updated_at
-		FROM slots
-		WHERE id = $1
-		FOR UPDATE
-	`
-	err = tx.QueryRow(ctx, slotQuery, input.SlotID).Scan(
-		&slot.ID, &slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime,
-		&slot.Capacity, &slot.RemainingCapacity, &slot.Status, &slot.DurationMinutes,
-		&price, &slot.Currency, &metadataBytes, &heldUntil,
-		&slot.CreatedAt, &slot.UpdatedAt,
-	)
+	slot, err := scanSlot(tx.QueryRow(ctx, "SELECT "+slotColumns+" FROM slots WHERE id = $1 FOR UPDATE", input.SlotID))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, NewBookingError("Slot not found", "SLOT_NOT_FOUND", 404)
 		}
 		return nil, err
-	}
-	slot.Price = price
-	slot.HeldUntil = heldUntil
-	if len(metadataBytes) > 0 {
-		_ = json.Unmarshal(metadataBytes, &slot.Metadata)
 	}
 
 	if slot.Status == models.SlotStatusBlocked {
@@ -434,12 +512,7 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, venueID, date st
 		}
 	}
 
-	query := `
-		SELECT id, venue_id, date::text, start_time, end_time, capacity, remaining_capacity, status, duration_minutes, price, currency, metadata, held_until, created_at, updated_at
-		FROM slots
-		WHERE venue_id = $1 AND date = $2
-		ORDER BY start_time ASC
-	`
+	query := "SELECT " + slotColumns + " FROM slots WHERE venue_id = $1 AND date = $2 ORDER BY start_time ASC"
 	rows, err := s.db.Pool.Query(ctx, query, venueID, date)
 	if err != nil {
 		return nil, err
@@ -448,26 +521,11 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, venueID, date st
 
 	slots := make([]models.Slot, 0)
 	for rows.Next() {
-		var slot models.Slot
-		var price *float64
-		var metadataBytes []byte
-		var heldUntil *time.Time
-
-		err := rows.Scan(
-			&slot.ID, &slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime,
-			&slot.Capacity, &slot.RemainingCapacity, &slot.Status, &slot.DurationMinutes,
-			&price, &slot.Currency, &metadataBytes, &heldUntil,
-			&slot.CreatedAt, &slot.UpdatedAt,
-		)
+		slot, err := scanSlot(rows)
 		if err != nil {
 			return nil, err
 		}
-		slot.Price = price
-		slot.HeldUntil = heldUntil
-		if len(metadataBytes) > 0 {
-			_ = json.Unmarshal(metadataBytes, &slot.Metadata)
-		}
-		slots = append(slots, slot)
+		slots = append(slots, *slot)
 	}
 
 	data, err := json.Marshal(slots)
@@ -479,34 +537,38 @@ func (s *BookingService) GetAvailableSlots(ctx context.Context, venueID, date st
 }
 
 func (s *BookingService) GetSlotByID(ctx context.Context, id string) (*models.Slot, error) {
-	var slot models.Slot
-	var price *float64
-	var metadataBytes []byte
-	var heldUntil *time.Time
-
-	query := `
-		SELECT id, venue_id, date::text, start_time, end_time, capacity, remaining_capacity, status, duration_minutes, price, currency, metadata, held_until, created_at, updated_at
-		FROM slots
-		WHERE id = $1
-	`
-	err := s.db.Pool.QueryRow(ctx, query, id).Scan(
-		&slot.ID, &slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime,
-		&slot.Capacity, &slot.RemainingCapacity, &slot.Status, &slot.DurationMinutes,
-		&price, &slot.Currency, &metadataBytes, &heldUntil,
-		&slot.CreatedAt, &slot.UpdatedAt,
-	)
+	query := "SELECT " + slotColumns + " FROM slots WHERE id = $1"
+	slot, err := scanSlot(s.db.Pool.QueryRow(ctx, query, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	slot.Price = price
-	slot.HeldUntil = heldUntil
-	if len(metadataBytes) > 0 {
-		_ = json.Unmarshal(metadataBytes, &slot.Metadata)
+	return slot, nil
+}
+
+func (s *BookingService) updateSlotAndBroadcast(ctx context.Context, slot *models.Slot) error {
+	metadataBytes, _ := json.Marshal(slot.Metadata)
+	now := time.Now()
+	_, err := s.db.Pool.Exec(ctx, `
+		UPDATE slots
+		SET status = $1, metadata = $2, updated_at = $3
+		WHERE id = $4
+	`, slot.Status, metadataBytes, now, slot.ID)
+	if err != nil {
+		return err
 	}
-	return &slot, nil
+
+	_ = s.redis.InvalidateSlotCache(ctx, slot.VenueID, slot.Date)
+
+	s.wsHub.Broadcast("slotAvailabilityChanged", map[string]interface{}{
+		"slotId":            slot.ID,
+		"venueId":           slot.VenueID,
+		"status":            slot.Status,
+		"remainingCapacity": slot.RemainingCapacity,
+	})
+	return nil
 }
 
 func (s *BookingService) BlockSlot(ctx context.Context, slotID, adminID, reason string) (*models.Slot, error) {
@@ -524,27 +586,10 @@ func (s *BookingService) BlockSlot(ctx context.Context, slotID, adminID, reason 
 	slot.Metadata["blockReason"] = reason
 	slot.Metadata["blockedBy"] = adminID
 	slot.Status = models.SlotStatusBlocked
-	metadataBytes, _ := json.Marshal(slot.Metadata)
 
-	now := time.Now()
-	_, err = s.db.Pool.Exec(ctx, `
-		UPDATE slots
-		SET status = $1, metadata = $2, updated_at = $3
-		WHERE id = $4
-	`, slot.Status, metadataBytes, now, slot.ID)
-	if err != nil {
+	if err := s.updateSlotAndBroadcast(ctx, slot); err != nil {
 		return nil, err
 	}
-
-	_ = s.redis.InvalidateSlotCache(ctx, slot.VenueID, slot.Date)
-
-	s.wsHub.Broadcast("slotAvailabilityChanged", map[string]interface{}{
-		"slotId":            slot.ID,
-		"venueId":           slot.VenueID,
-		"status":            slot.Status,
-		"remainingCapacity": slot.RemainingCapacity,
-	})
-
 	return slot, nil
 }
 
@@ -567,27 +612,10 @@ func (s *BookingService) UnblockSlot(ctx context.Context, slotID, adminID string
 		delete(slot.Metadata, "blockReason")
 		delete(slot.Metadata, "blockedBy")
 	}
-	metadataBytes, _ := json.Marshal(slot.Metadata)
 
-	now := time.Now()
-	_, err = s.db.Pool.Exec(ctx, `
-		UPDATE slots
-		SET status = $1, metadata = $2, updated_at = $3
-		WHERE id = $4
-	`, slot.Status, metadataBytes, now, slot.ID)
-	if err != nil {
+	if err := s.updateSlotAndBroadcast(ctx, slot); err != nil {
 		return nil, err
 	}
-
-	_ = s.redis.InvalidateSlotCache(ctx, slot.VenueID, slot.Date)
-
-	s.wsHub.Broadcast("slotAvailabilityChanged", map[string]interface{}{
-		"slotId":            slot.ID,
-		"venueId":           slot.VenueID,
-		"status":            slot.Status,
-		"remainingCapacity": slot.RemainingCapacity,
-	})
-
 	return slot, nil
 }
 
@@ -601,78 +629,20 @@ func (s *BookingService) GetBookingByCode(ctx context.Context, code string) (*mo
 
 func (s *BookingService) getBooking(ctx context.Context, whereClause string, arg interface{}) (*models.Booking, error) {
 	query := fmt.Sprintf(`
-		SELECT b.id, b.user_id, b.slot_id, b.venue_id, b.confirmation_code, b.status, b.guest_count, b.notes,
-		       b.booking_date::text, b.confirmed_at, b.cancelled_at, b.cancellation_reason, b.completed_at,
-		       b.total_price, b.metadata, b.created_at, b.updated_at,
-		       s.id, s.venue_id, s.date::text, s.start_time, s.end_time, s.capacity, s.remaining_capacity,
-		       s.status, s.duration_minutes, s.price, s.currency, s.metadata, s.held_until, s.created_at, s.updated_at
+		SELECT %s
 		FROM bookings b
 		LEFT JOIN slots s ON b.slot_id = s.id
 		WHERE b.%s
-	`, whereClause)
+	`, bookingWithSlotColumns, whereClause)
 
-	var b models.Booking
-	var notes, cancellationReason *string
-	var confirmedAt, cancelledAt, completedAt *time.Time
-	var totalPrice *float64
-	var bMetaBytes []byte
-
-	var sID, sVenueID, sDate, sCurrency *string
-	var sStartTime, sEndTime, sCreatedAt, sUpdatedAt *time.Time
-	var sCapacity, sRemaining, sDuration *int
-	var sStatus *models.SlotStatus
-	var sPrice *float64
-	var sHeldUntil *time.Time
-	var sMetaBytes []byte
-
-	err := s.db.Pool.QueryRow(ctx, query, arg).Scan(
-		&b.ID, &b.UserID, &b.SlotID, &b.VenueID, &b.ConfirmationCode, &b.Status, &b.GuestCount, &notes,
-		&b.BookingDate, &confirmedAt, &cancelledAt, &cancellationReason, &completedAt,
-		&totalPrice, &bMetaBytes, &b.CreatedAt, &b.UpdatedAt,
-		&sID, &sVenueID, &sDate, &sStartTime, &sEndTime, &sCapacity, &sRemaining,
-		&sStatus, &sDuration, &sPrice, &sCurrency, &sMetaBytes, &sHeldUntil, &sCreatedAt, &sUpdatedAt,
-	)
+	booking, err := scanBookingWithSlot(s.db.Pool.QueryRow(ctx, query, arg))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	b.Notes = notes
-	b.ConfirmedAt = confirmedAt
-	b.CancelledAt = cancelledAt
-	b.CancellationReason = cancellationReason
-	b.CompletedAt = completedAt
-	b.TotalPrice = totalPrice
-	if len(bMetaBytes) > 0 {
-		_ = json.Unmarshal(bMetaBytes, &b.Metadata)
-	}
-
-	if sID != nil {
-		slot := &models.Slot{
-			ID:                *sID,
-			VenueID:           *sVenueID,
-			Date:              *sDate,
-			StartTime:         *sStartTime,
-			EndTime:           *sEndTime,
-			Capacity:          *sCapacity,
-			RemainingCapacity: *sRemaining,
-			Status:            *sStatus,
-			DurationMinutes:   *sDuration,
-			Price:             sPrice,
-			Currency:          *sCurrency,
-			HeldUntil:         sHeldUntil,
-			CreatedAt:         *sCreatedAt,
-			UpdatedAt:         *sUpdatedAt,
-		}
-		if len(sMetaBytes) > 0 {
-			_ = json.Unmarshal(sMetaBytes, &slot.Metadata)
-		}
-		b.Slot = slot
-	}
-
-	return &b, nil
+	return booking, nil
 }
 
 func (s *BookingService) GetBookingsByUser(
@@ -700,16 +670,12 @@ func (s *BookingService) GetBookingsByUser(
 		return nil, 0, err
 	}
 
-	selectQuery := `
-		SELECT b.id, b.user_id, b.slot_id, b.venue_id, b.confirmation_code, b.status, b.guest_count, b.notes,
-		       b.booking_date::text, b.confirmed_at, b.cancelled_at, b.cancellation_reason, b.completed_at,
-		       b.total_price, b.metadata, b.created_at, b.updated_at,
-		       s.id, s.venue_id, s.date::text, s.start_time, s.end_time, s.capacity, s.remaining_capacity,
-		       s.status, s.duration_minutes, s.price, s.currency, s.metadata, s.held_until, s.created_at, s.updated_at
+	selectQuery := fmt.Sprintf(`
+		SELECT %s
 		FROM bookings b
 		LEFT JOIN slots s ON b.slot_id = s.id
 		WHERE b.user_id = $1
-	`
+	`, bookingWithSlotColumns)
 	argsSelect := []interface{}{userID}
 	argIdx := 2
 	if status != nil && *status != "" {
@@ -729,65 +695,11 @@ func (s *BookingService) GetBookingsByUser(
 
 	bookings := make([]models.Booking, 0)
 	for rows.Next() {
-		var b models.Booking
-		var notes, cancellationReason *string
-		var confirmedAt, cancelledAt, completedAt *time.Time
-		var totalPrice *float64
-		var bMetaBytes []byte
-
-		var sID, sVenueID, sDate, sCurrency *string
-		var sStartTime, sEndTime, sCreatedAt, sUpdatedAt *time.Time
-		var sCapacity, sRemaining, sDuration *int
-		var sStatus *models.SlotStatus
-		var sPrice *float64
-		var sHeldUntil *time.Time
-		var sMetaBytes []byte
-
-		err := rows.Scan(
-			&b.ID, &b.UserID, &b.SlotID, &b.VenueID, &b.ConfirmationCode, &b.Status, &b.GuestCount, &notes,
-			&b.BookingDate, &confirmedAt, &cancelledAt, &cancellationReason, &completedAt,
-			&totalPrice, &bMetaBytes, &b.CreatedAt, &b.UpdatedAt,
-			&sID, &sVenueID, &sDate, &sStartTime, &sEndTime, &sCapacity, &sRemaining,
-			&sStatus, &sDuration, &sPrice, &sCurrency, &sMetaBytes, &sHeldUntil, &sCreatedAt, &sUpdatedAt,
-		)
+		booking, err := scanBookingWithSlot(rows)
 		if err != nil {
 			return nil, 0, err
 		}
-
-		b.Notes = notes
-		b.ConfirmedAt = confirmedAt
-		b.CancelledAt = cancelledAt
-		b.CancellationReason = cancellationReason
-		b.CompletedAt = completedAt
-		b.TotalPrice = totalPrice
-		if len(bMetaBytes) > 0 {
-			_ = json.Unmarshal(bMetaBytes, &b.Metadata)
-		}
-
-		if sID != nil {
-			slot := &models.Slot{
-				ID:                *sID,
-				VenueID:           *sVenueID,
-				Date:              *sDate,
-				StartTime:         *sStartTime,
-				EndTime:           *sEndTime,
-				Capacity:          *sCapacity,
-				RemainingCapacity: *sRemaining,
-				Status:            *sStatus,
-				DurationMinutes:   *sDuration,
-				Price:             sPrice,
-				Currency:          *sCurrency,
-				HeldUntil:         sHeldUntil,
-				CreatedAt:         *sCreatedAt,
-				UpdatedAt:         *sUpdatedAt,
-			}
-			if len(sMetaBytes) > 0 {
-				_ = json.Unmarshal(sMetaBytes, &slot.Metadata)
-			}
-			b.Slot = slot
-		}
-
-		bookings = append(bookings, b)
+		bookings = append(bookings, *booking)
 	}
 
 	return bookings, total, nil
