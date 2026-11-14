@@ -139,28 +139,6 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Slots Header */}
-      <div className="flex items-center justify-between text-sm text-[#95CCDD] px-3.5 py-2.5 rounded-xl bg-[#0a0e28] border border-[#1c2763]">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-[#4274D9]" />
-          <span className="font-semibold text-white">
-            {venueName}
-          </span>
-          <span className="text-[#D0E7E6] font-mono font-medium">· {formattedSelectedDate}</span>
-          <span className="text-[#95CCDD]/70 font-mono text-xs">({slots.length} slots)</span>
-        </div>
-
-        <button
-          onClick={fetchSlots}
-          disabled={isLoading}
-          className="flex items-center gap-1.5 text-xs font-medium text-[#D0E7E6] hover:text-white transition px-2 py-1 rounded-lg hover:bg-[#151e4d]"
-          title="Refresh slots"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-[#4274D9] ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
-        </button>
-      </div>
-
       {error && (
         <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-sm text-rose-300 font-mono">
           <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />

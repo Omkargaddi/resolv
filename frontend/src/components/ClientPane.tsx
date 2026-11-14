@@ -71,7 +71,6 @@ export const ClientPane: React.FC<ClientPaneProps> = ({
                 {preset.role}
               </span>
             </div>
-            <div className="text-xs text-[#95CCDD] font-mono">{preset.email}</div>
           </div>
         </div>
 

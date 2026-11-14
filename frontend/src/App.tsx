@@ -92,14 +92,8 @@ const AppContent: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">Universal Day Selector</span>
-                <span className="px-2 py-0.5 rounded text-xs font-mono font-medium text-[#D0E7E6] bg-[#293681]/50 border border-[#4274D9]/30">
-                  Global Filter
-                </span>
+                <span className="text-sm font-bold text-white">Day Selector</span>
               </div>
-              <p className="text-xs text-[#95CCDD]">
-                Selecting a day updates the schedule simultaneously for all 3 users below
-              </p>
             </div>
           </div>
 
@@ -131,20 +125,7 @@ const AppContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Sync Information Banner */}
-        <div className="px-4 py-3 rounded-2xl bg-[#0a0f2c]/70 border border-[#1c2763] flex items-center justify-between text-xs text-[#95CCDD]">
-          <div className="flex items-center gap-2.5">
-            <Radio className="w-4 h-4 text-[#4274D9] animate-pulse" />
-            <span className="text-white font-semibold">Multi-Session Live Synchronization</span>
-            <span className="text-[#1c2763] hidden sm:inline">|</span>
-            <span className="text-[#D0E7E6] hidden sm:inline">
-              Each column operates in its own authenticated session. Slot bookings, cancellations, and admin locks propagate instantly via WebSockets across all 3 panes.
-            </span>
-          </div>
-          <div className="text-xs font-mono font-medium text-[#D0E7E6] hidden md:block px-2.5 py-1 rounded-lg bg-[#080c20] border border-[#1c2763]">
-            Venue: {activeVenue.name}
-          </div>
-        </div>
+      
 
         {/* 3-Pane Side-by-Side Responsive Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">

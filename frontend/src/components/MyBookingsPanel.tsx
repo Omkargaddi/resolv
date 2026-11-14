@@ -81,17 +81,6 @@ export const MyBookingsPanel: React.FC<MyBookingsPanelProps> = ({
     <div className="space-y-4">
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#080c20] p-4 rounded-2xl border border-[#1c2763]">
-        <div>
-          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <span>Reservations for {userName}</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#293681] text-[#D0E7E6]">
-              {bookings.length}
-            </span>
-          </h4>
-          <p className="text-xs text-[#95CCDD] mt-0.5">
-            Real-time status tracking & instant seat reclamation
-          </p>
-        </div>
 
         <div className="flex items-center gap-2">
           {/* Status Filter */}

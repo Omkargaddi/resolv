@@ -51,21 +51,10 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Transparent Brand Logo in clean high-contrast container */}
             <div className="bg-white/95 px-3 py-1 rounded-xl shadow-md border border-white/30 flex items-center hover:bg-white transition">
               <img
-                src="/logo_transparent.png"
+                src="../../public/logo_transparent.png"
                 alt="Resolv"
                 className="h-8 sm:h-9 w-auto object-contain"
               />
-            </div>
-
-            <div className="hidden sm:block">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold text-[#D0E7E6] bg-[#293681]/70 border border-[#4274D9]/40">
-                  v2.4.1
-                </span>
-                <span className="text-xs font-medium text-[#95CCDD]">
-                  Enterprise Booking Platform
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -74,14 +63,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3">
           {getStatusBadge()}
 
-          <button
-            onClick={() => wsClient.connect()}
-            title="WebSocket Events Streamed"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono font-medium text-[#D0E7E6] bg-[#0f1538] hover:bg-[#151e4d] border border-[#1c2763] hover:border-[#4274D9]/60 transition shadow-sm"
-          >
-            <Radio className="w-3.5 h-3.5 text-[#4274D9]" />
-            <span>{eventCount} events</span>
-          </button>
 
           <button
             onClick={onRefreshAll}
