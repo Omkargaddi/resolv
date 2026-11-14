@@ -277,8 +277,3 @@ The server broadcasts JSON messages when slot availability or bookings change:
 | `npm run docker:up` | Start all services via Docker Compose |
 | `npm run docker:down` | Stop Docker Compose services |
 
----
-
-## License
-
-MIT

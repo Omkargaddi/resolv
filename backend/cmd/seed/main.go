@@ -35,17 +35,17 @@ func main() {
 		defer func() { _ = rdb.Close() }()
 	}
 
-	// 1. Seed Admin
+	// Seed Admin
 	seedUser(ctx, db, "System Admin", "admin@reserve.local", "AdminPassword123!", models.UserRoleAdmin, nil)
 
-	// 2. Seed Members
+	// Seed Members
 	phone1 := "+1234567890"
 	seedUser(ctx, db, "John Doe", "user@example.com", "securepass", models.UserRoleMember, &phone1)
 
 	phone2 := "+1987654321"
 	seedUser(ctx, db, "Alice Smith", "alice@example.com", "securepass", models.UserRoleMember, &phone2)
 
-	// 3. Seed Slots
+	// Seed Slots
 	sampleVenueID := "11111111-1111-1111-1111-111111111111"
 	var slotCount int
 	err = db.Pool.QueryRow(ctx, "SELECT count(*) FROM slots WHERE venue_id = $1", sampleVenueID).Scan(&slotCount)

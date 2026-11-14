@@ -38,27 +38,27 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 1. Database
+	// database
 	db, err := database.NewDB(ctx, cfg)
 	if err != nil {
 		log.Fatalf("[FATAL] Database init failed: %v", err)
 	}
 	defer db.Close()
 
-	// 2. Redis
+	// redis
 	rdb, err := redis.NewClient(cfg)
 	if err != nil {
 		log.Fatalf("[FATAL] Redis init failed: %v", err)
 	}
 	defer func() { _ = rdb.Close() }()
 
-	// 3. Notification Service
+	// notification Service
 	notifier := notification.NewService()
 
-	// 4. WebSocket Hub
+	// webSocket Hub
 	wsHub := websocket.GetHub()
 
-	// 5. Queue Service
+	// Queue Service
 	queueService, err := queue.NewService(cfg)
 	if err != nil {
 		log.Fatalf("[FATAL] Queue init failed: %v", err)
@@ -68,7 +68,7 @@ func main() {
 	}
 	defer queueService.Shutdown()
 
-	// 6. Services & Handlers
+	// Services & Handlers
 	authMgr := middleware.NewAuthManager(cfg)
 	bookingService := services.NewBookingService(db, rdb, queueService, notifier, wsHub, cfg)
 
@@ -78,7 +78,7 @@ func main() {
 	bookingHandler := handlers.NewBookingHandler(bookingService)
 	adminHandler := handlers.NewAdminHandler(queueService)
 
-	// 7. Chi Router
+	// chi router
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
@@ -101,7 +101,7 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// Health Check
+	// Health 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderJSON(w, http.StatusOK, map[string]interface{}{
 			"status":    "ok",
@@ -110,14 +110,14 @@ func main() {
 		})
 	})
 
-	// WebSockets
+	// webSockets
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {
 		websocket.ServeWS(wsHub, w, r)
 	})
 
-	// API Routes
+	// Routes
 	r.Route("/api", func(api chi.Router) {
-		// Auth Routes
+		// Auth
 		api.Route("/auth", func(auth chi.Router) {
 			auth.Post("/register", authHandler.Register)
 			auth.Post("/login", authHandler.Login)
@@ -131,14 +131,14 @@ func main() {
 			})
 		})
 
-		// Venue Routes
+		// Venue 
 		api.Route("/venues", func(venues chi.Router) {
 			venues.Get("/", venueHandler.GetVenues)
 			venues.Get("/{id}", venueHandler.GetVenueByID)
 			venues.Get("/{venueId}/slots", slotHandler.GetAvailableSlots)
 		})
 
-		// Slot Routes
+		// Slot
 		api.Route("/slots", func(slots chi.Router) {
 			slots.Get("/{id}", slotHandler.GetSlotByID)
 
@@ -150,7 +150,7 @@ func main() {
 			})
 		})
 
-		// Booking Routes
+		// Booking
 		api.Route("/bookings", func(bookings chi.Router) {
 			bookings.Use(authMgr.Authenticate)
 			bookings.Post("/", bookingHandler.CreateBooking)
@@ -160,7 +160,7 @@ func main() {
 			bookings.Post("/{id}/cancel", bookingHandler.CancelBooking)
 		})
 
-		// Admin Routes
+		// Admin
 		api.Route("/admin", func(admin chi.Router) {
 			admin.Use(authMgr.Authenticate)
 			admin.Use(middleware.AuthorizeRole(models.UserRoleAdmin))
@@ -168,12 +168,12 @@ func main() {
 		})
 	})
 
-	// 404 Handler
+	// 404
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderError(w, http.StatusNotFound, "Endpoint not found", "NOT_FOUND")
 	})
 
-	// 8. Start HTTP Server
+	// HTTP Server
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
 	srv := &http.Server{
 		Addr:    serverAddr,
@@ -191,7 +191,7 @@ func main() {
 		}
 	}()
 
-	// 9. Graceful Shutdown
+	// shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit

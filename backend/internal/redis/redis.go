@@ -43,7 +43,7 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// AcquireLock acquires a distributed lock using SET NX PX
+// acquires a distributed lock using SET NX PX
 func (c *Client) AcquireLock(ctx context.Context, key string, ttl time.Duration) (string, error) {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
@@ -55,12 +55,12 @@ func (c *Client) AcquireLock(ctx context.Context, key string, ttl time.Duration)
 		return "", err
 	}
 	if !ok {
-		return "", nil // Not acquired
+		return "", nil // not acquired
 	}
 	return lockID, nil
 }
 
-// ReleaseLock releases the distributed lock via an atomic Lua script
+// releases the distributed lock via an atomic Lua script
 func (c *Client) ReleaseLock(ctx context.Context, key, lockID string) (bool, error) {
 	script := `
 		if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -80,19 +80,19 @@ func (c *Client) ReleaseLock(ctx context.Context, key, lockID string) (bool, err
 	return false, nil
 }
 
-// GetSlotCache retrieves cached slots JSON
+// retrieves cached slots JSON
 func (c *Client) GetSlotCache(ctx context.Context, venueID, date string) (string, error) {
 	cacheKey := fmt.Sprintf("slots:%s:%s", venueID, date)
 	return c.RDB.Get(ctx, cacheKey).Result()
 }
 
-// SetSlotCache saves slots JSON to cache with 60s TTL
+// saves slots JSON to cache with 60s TTL
 func (c *Client) SetSlotCache(ctx context.Context, venueID, date string, data string) error {
 	cacheKey := fmt.Sprintf("slots:%s:%s", venueID, date)
 	return c.RDB.Set(ctx, cacheKey, data, 60*time.Second).Err()
 }
 
-// InvalidateSlotCache deletes the cached slots for a venue and date
+// deletes the cached slots for a venue and date
 func (c *Client) InvalidateSlotCache(ctx context.Context, venueID, date string) error {
 	cacheKey := fmt.Sprintf("slots:%s:%s", venueID, date)
 	return c.RDB.Del(ctx, cacheKey).Err()

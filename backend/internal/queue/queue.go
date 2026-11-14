@@ -85,7 +85,7 @@ func (s *Service) StartWorkers() error {
 		return nil
 	})
 
-	// Schedule recurring job every 5 minutes: */5 * * * *
+	// schedule recurring job every 5 minutes: */5 * * * *
 	reclaimTask := asynq.NewTask(TypeReclaimExpiredSlot, nil, asynq.Queue(QueueName))
 	if _, err := s.scheduler.Register("*/5 * * * *", reclaimTask); err != nil {
 		log.Printf("[WARN] Failed to register recurring reclaim task: %v", err)
@@ -123,7 +123,7 @@ func (s *Service) Enqueue(taskType string, payload interface{}) error {
 func (s *Service) GetQueueStats() (*QueueStats, error) {
 	qInfo, err := s.inspector.GetQueueInfo(QueueName)
 	if err != nil {
-		// If queue doesn't exist yet, return zeros
+		// if queue doesn't exist yet, return zeros
 		return &QueueStats{
 			Waiting:   0,
 			Active:    0,
