@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AuthProvider, useAuth, PRESET_PERSONAS } from '../../../frontend/src/context/AuthContext';
+import { AuthProvider, useAuth, PRESET_PERSONAS } from './context/AuthContext';
 import Header from '../../../frontend/src/components/Header';
 import ClientPane from '../../../frontend/src/components/ClientPane';
 import ConcurrencyArena from '../../../frontend/src/components/ConcurrencyArena';
 import WebSocketLog from '../../../frontend/src/components/WebSocketLog';
-import { wsClient } from '../../../frontend/src/services/websocket';
+import { wsClient } from './services/websocket';
 import { WebSocketEvent, Venue } from './types';
-import { getVenuesApi } from '../../../frontend/src/services/api';
+import { getVenuesApi } from './services/api';
 import { User, Shield } from 'lucide-react';
 
 const AppContent: React.FC = () => {
