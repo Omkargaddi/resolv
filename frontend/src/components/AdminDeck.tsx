@@ -12,7 +12,7 @@ import {
   Cpu,
 } from 'lucide-react';
 import { QueueStats } from '../types';
-import { getQueueStatsApi, getHealthApi, extractApiError } from '../../../resolv/frontend/src/services/api';
+import { getQueueStatsApi, getHealthApi, extractApiError } from '../services/api';
 
 interface AdminDeckProps {
   token: string | null;

@@ -11,7 +11,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { Slot, Booking } from '../types';
-import { createBookingApi, extractApiError } from '../../../resolv/frontend/src/services/api';
+import { createBookingApi, extractApiError } from '../services/api';
 
 interface BookingModalProps {
   slot: Slot;

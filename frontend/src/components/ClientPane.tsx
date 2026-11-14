@@ -9,7 +9,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Slot, Booking } from '../types';
-import { useAuth, PRESET_PERSONAS } from '../../../resolv/frontend/src/context/AuthContext';
+import { useAuth, PRESET_PERSONAS } from '../context/AuthContext';
 import SlotSelector from './SlotSelector';
 import MyBookingsPanel from './MyBookingsPanel';
 import BookingModal from './BookingModal';

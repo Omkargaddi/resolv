@@ -46,6 +46,22 @@ async function seed(): Promise<void> {
     logger.info('Member user already exists');
   }
 
+  const existingAlice = await userRepo.findOne({ where: { email: 'alice@example.com' } });
+  if (!existingAlice) {
+    const alice = userRepo.create({
+      name: 'Alice Smith',
+      email: 'alice@example.com',
+      password: 'securepass',
+      role: UserRole.MEMBER,
+      isActive: true,
+      phone: '+1987654321',
+    });
+    await userRepo.save(alice);
+    logger.info('Seeded member user: alice@example.com / securepass');
+  } else {
+    logger.info('Alice user already exists');
+  }
+
   // 2. Seed Sample Slots for a Demo Venue
   const sampleVenueId = '11111111-1111-1111-1111-111111111111';
   const slotCount = await slotRepo.count({ where: { venueId: sampleVenueId } });

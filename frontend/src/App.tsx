@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth, PRESET_PERSONAS } from './context/AuthContext';
 import Header from './components/Header';
-import ClientPane from '../../../frontend/src/components/ClientPane';
+import ClientPane from './components/ClientPane';
 import ConcurrencyArena from './components/ConcurrencyArena';
 import WebSocketLog from './components/WebSocketLog';
 import { wsClient } from './services/websocket';
