@@ -14,10 +14,6 @@ services:
       - DATABASE_URL=postgresql://${DB_USER:-reserve}:${DB_PASSWORD:-reserve_secret}@postgres:5432/${DB_NAME:-reserve_db}?sslmode=disable
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-fallback-secret-production}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - SNS_TOPIC_ARN=${SNS_TOPIC_ARN}
     depends_on:
       postgres:
         condition: service_healthy

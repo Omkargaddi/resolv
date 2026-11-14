@@ -11,7 +11,6 @@
   <a href="#"><img src="https://img.shields.io/badge/Redis-7.x-DC382D?style=flat-square&logo=redis" alt="Redis" /></a>
   <a href="#"><img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker" alt="Docker" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/AWS-Integrated-FF9900?style=flat-square&logo=amazonaws" alt="AWS" /></a>
   <a href="#"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" /></a>
 </p>
 
@@ -29,7 +28,7 @@ Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocke
 - **RESTful API** -- Clean, organized endpoints under `/api` for authentication, venues, slots, and bookings
 - **Real-Time WebSockets** -- Native WebSocket broadcasting at `/ws` for slot availability and booking status changes powered by Gorilla WebSocket
 - **Queue-Based Processing** -- Asynq Redis workers for async booking confirmation, notification dispatch, and slot reclamation
-- **Push Notifications** -- AWS SNS integration for booking confirmations, reminders, and cancellation alerts
+- **Event Notifications** -- Notification dispatch for booking confirmations, reminders, and cancellation alerts
 - **JWT Authentication** -- Stateless auth with refresh token rotation and role-based access control
 - **Multi-Venue Support** -- Manage multiple venues with independent availability calendars and slot configurations
 - **Automatic Slot Reclamation** -- Expired holds released back into the pool via scheduled recurring workers
@@ -55,11 +54,11 @@ Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocke
                   +-------v------+   +------v-------+   +-------v--------+
                   |   Auth       |   |  Booking     |   |  Notification  |
                   |  Middleware  |   |  Service     |   |  Service       |
-                  +--------------+   +--+--------+--+   +-------+--------+
-                                        |        |              |
-                                   +----v--+ +---v----+   +----v-----+
-                                   |  PG   | | Redis  |   |  AWS SNS |
-                                   +-------+ +--------+   +----------+
+                  +--------------+   +--+--------+--+   +----------------+
+                                        |        |
+                                   +----v--+ +---v----+
+                                   |  PG   | | Redis  |
+                                   +-------+ +--------+
                                                 |
                                           +-----v------+
                                           |   Asynq    |
@@ -78,7 +77,7 @@ Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocke
 | Cache / Locks    | Redis 7 (`redis/go-redis/v9`)             |
 | Queue / Tasks    | Asynq (`hibiken/asynq`)                   |
 | Auth             | JWT (`golang-jwt/jwt/v5`), bcrypt         |
-| Notifications    | AWS SNS (AWS SDK for Go v2)               |
+| Notifications    | Internal Event / Logger Service           |
 | Frontend         | React 19, TypeScript, Vite, TailwindCSS   |
 | Containerization | Docker, Docker Compose                    |
 
@@ -91,7 +90,6 @@ Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocke
 - Go >= 1.22
 - Node.js >= 18 (for the frontend React client)
 - Docker & Docker Compose
-- AWS credentials (optional, for SNS push notifications)
 
 ### Installation & Local Setup
 

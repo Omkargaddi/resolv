@@ -19,11 +19,6 @@ type Config struct {
 	JWTSecret                    string
 	JWTAccessExpiry              time.Duration
 	JWTRefreshExpiry             time.Duration
-	AWSRegion                    string
-	AWSAccessKeyID               string
-	AWSSecretAccessKey           string
-	SNSTopicARN                  string
-	SNSEndpoint                  string
 	CORSOrigin                   string
 	MaxBookingAdvanceDays        int
 	MaxConcurrentBookingsPerUser int
@@ -68,11 +63,6 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:                    getEnv("JWT_SECRET", "fallback-dev-secret"),
 		JWTAccessExpiry:              jwtAccessExpiry,
 		JWTRefreshExpiry:             jwtRefreshExpiry,
-		AWSRegion:                    getEnv("AWS_REGION", "us-east-1"),
-		AWSAccessKeyID:               os.Getenv("AWS_ACCESS_KEY_ID"),
-		AWSSecretAccessKey:           os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		SNSTopicARN:                  os.Getenv("SNS_TOPIC_ARN"),
-		SNSEndpoint:                  os.Getenv("SNS_ENDPOINT"),
 		CORSOrigin:                   getEnv("CORS_ORIGIN", "*"),
 		MaxBookingAdvanceDays:        advanceDays,
 		MaxConcurrentBookingsPerUser: maxBookings,

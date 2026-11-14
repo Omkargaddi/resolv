@@ -53,7 +53,7 @@ func main() {
 	defer func() { _ = rdb.Close() }()
 
 	// 3. Notification Service
-	notifier := notification.NewService(ctx, cfg)
+	notifier := notification.NewService()
 
 	// 4. WebSocket Hub
 	wsHub := websocket.GetHub()
