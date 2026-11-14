@@ -3,23 +3,20 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build
+# Production Build
 dist/
 build/
 *.tsbuildinfo
 
-# Environment
+# Environment Variables
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
+*.env
+!.env.example
 
 # Logs
 logs/
@@ -27,19 +24,35 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Testing
+# Testing & Coverage
 coverage/
 .nyc_output/
+
+# IDE & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# OS Metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
 
 # Docker
 docker-compose.override.yml
 
-# OS
-Thumbs.db
-ehthumbs.db
-
-# Temporary
+# Temporary & Caches
 tmp/
 temp/
 .cache/
+.eslintcache

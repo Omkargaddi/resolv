@@ -1,4 +1,4 @@
-import { Repository, DataSource, QueryRunner } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Booking, BookingStatus } from '../models/Booking';
 import { Slot, SlotStatus } from '../models/Slot';
 import { User } from '../models/User';
@@ -46,7 +46,7 @@ export class BookingService {
     this.slotRepo = dataSource.getRepository(Slot);
     this.userRepo = dataSource.getRepository(User);
     this.notificationService = new NotificationService();
-    this.queueService = new QueueService();
+    this.queueService = QueueService.getInstance();
   }
 
   async createBooking(input: CreateBookingInput): Promise<Booking> {

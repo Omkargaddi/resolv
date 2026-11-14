@@ -1,13 +1,13 @@
 <p align="center">
-  <h1 align="center">ReserveAPI</h1>
+  <h1 align="center">Resolv</h1>
   <p align="center">A high-performance, real-time booking and reservation system built for scale.</p>
 </p>
 
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square&logo=node.js" alt="Node.js" /></a>
   <a href="#"><img src="https://img.shields.io/badge/TypeScript-5.3-blue?style=flat-square&logo=typescript" alt="TypeScript" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/GraphQL-16.8-e10098?style=flat-square&logo=graphql" alt="GraphQL" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Apollo%20Server-4.x-311C87?style=flat-square&logo=apollographql" alt="Apollo Server" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/REST-API-005571?style=flat-square" alt="REST API" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/WebSockets-ws-010101?style=flat-square" alt="WebSockets" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Redis-7.x-DC382D?style=flat-square&logo=redis" alt="Redis" /></a>
   <a href="#"><img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker" alt="Docker" /></a>
@@ -19,14 +19,15 @@
 
 ## Overview
 
-ReserveAPI is a production-grade reservation engine designed to handle high-concurrency booking scenarios with zero double-booking guarantees. It leverages Redis distributed locks, PostgreSQL row-level locking, and event-driven architecture to ensure data integrity under heavy load.
+Reslov is a production-grade reservation engine designed to handle high-concurrency booking scenarios with zero double-booking guarantees. It leverages Redis distributed locks, PostgreSQL row-level locking, and event-driven architecture to ensure data integrity under heavy load.
 
-Built as a set of composable services behind a unified GraphQL gateway, ReserveAPI supports multi-tenant venue management, flexible time-slot configurations, and real-time availability updates via WebSocket subscriptions.
+Built as a set of composable services behind a clean Express REST API with native WebSocket event broadcasting, Resolv supports multi-tenant venue management, flexible time-slot configurations, and real-time availability updates.
 
 ## Features
 
 - **Real-time Booking Engine** -- Optimistic locking with Redis + PostgreSQL to prevent double bookings under concurrent access
-- **GraphQL API** -- Strongly-typed queries, mutations, and subscriptions with DataLoader for N+1 query prevention
+- **RESTful API** -- Clean, organized endpoints under `/api` for authentication, venues, slots, and bookings
+- **Real-Time WebSockets** -- Native WebSocket broadcasting at `/ws` for slot availability and booking status changes
 - **Queue-Based Processing** -- BullMQ workers for async booking confirmation, email dispatch, and slot reclamation
 - **Push Notifications** -- AWS SNS integration for booking confirmations, reminders, and cancellation alerts
 - **Rate Limiting** -- Token-bucket rate limiting backed by Redis for abuse prevention
@@ -43,18 +44,18 @@ Built as a set of composable services behind a unified GraphQL gateway, ReserveA
                                     |  (Web / Mobile)  |
                                     +--------+---------+
                                              |
-                                        WebSocket / HTTPS
+                                         WebSocket / HTTPS
                                              |
                                     +--------v---------+
-                                    |   API Gateway     |
-                                    |  (Apollo Server)  |
+                                    |   REST Gateway   |
+                                    |   & WebSockets   |
                                     +--+-----+------+--+
                                        |     |      |
                           +------------+     |      +-------------+
                           |                  |                    |
                   +-------v------+   +------v-------+   +-------v--------+
                   |   Auth       |   |  Booking     |   |  Notification  |
-                  |  Middleware   |   |  Service     |   |  Service       |
+                  |  Middleware  |   |  Service     |   |  Service       |
                   +--------------+   +--+--------+--+   +-------+--------+
                                         |        |              |
                                    +----v--+ +---v----+   +----v-----+
@@ -72,7 +73,8 @@ Built as a set of composable services behind a unified GraphQL gateway, ReserveA
 | Layer          | Technology                          |
 |----------------|-------------------------------------|
 | Runtime        | Node.js 20, TypeScript 5.3          |
-| API            | Apollo Server 4, GraphQL 16         |
+| API            | Express 4 (REST)                    |
+| Real-Time      | WebSockets (ws)                     |
 | Database       | PostgreSQL 16, TypeORM              |
 | Cache / Locks  | Redis 7 (ioredis)                   |
 | Queue          | BullMQ                              |
@@ -105,132 +107,128 @@ cp .env.example .env
 # Start infrastructure (PostgreSQL + Redis)
 docker-compose up -d postgres redis
 
-# Run database migrations
-npm run migrate
+# Seed initial test data (Users and Slots)
+npm run seed
 
 # Start the development server
 npm run dev
 ```
 
-The GraphQL playground will be available at `http://localhost:4000/graphql`.
-
-### Docker (Full Stack)
-
-```bash
-docker-compose up -d
-```
+The REST API will be available at `http://localhost:4000/api` and WebSockets at `ws://localhost:4000/ws`.
 
 ## API Documentation
 
 ### Authentication
 
-```graphql
-mutation Login {
-  login(input: { email: "user@example.com", password: "securepass" }) {
-    accessToken
-    refreshToken
-    user {
-      id
-      email
-      name
-    }
-  }
+#### Register
+`POST /api/auth/register`
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "securepassword",
+  "phone": "+1234567890"
 }
 ```
 
-### Query Available Slots
-
-```graphql
-query GetAvailableSlots {
-  availableSlots(
-    venueId: "venue_01HQ3..."
-    date: "2025-04-15"
-  ) {
-    id
-    startTime
-    endTime
-    status
-    capacity
-    remainingCapacity
-  }
+#### Login
+`POST /api/auth/login`
+```json
+{
+  "email": "user@example.com",
+  "password": "securepass"
 }
 ```
 
-### Create a Booking
-
-```graphql
-mutation CreateBooking {
-  createBooking(input: {
-    slotId: "slot_01HQ3..."
-    venueId: "venue_01HQ3..."
-    guestCount: 4
-    notes: "Window seat preferred"
-  }) {
-    id
-    status
-    confirmationCode
-    slot {
-      startTime
-      endTime
-    }
-    venue {
-      name
-      address
-    }
-  }
+#### Refresh Token
+`POST /api/auth/refresh`
+```json
+{
+  "refreshToken": "<refresh-token>"
 }
 ```
 
-### Cancel a Booking
+#### Get Current Profile
+`GET /api/auth/me`
+*Header: `Authorization: Bearer <accessToken>`*
 
-```graphql
-mutation CancelBooking {
-  cancelBooking(id: "booking_01HQ3...") {
-    id
-    status
-    cancelledAt
-  }
+---
+
+### Slots
+
+#### Get Available Slots for a Venue
+`GET /api/venues/:venueId/slots?date=2026-11-15`
+
+#### Get Slot by ID
+`GET /api/slots/:id`
+
+---
+
+### Bookings
+
+#### Create a Booking
+`POST /api/bookings`
+*Header: `Authorization: Bearer <accessToken>`*
+```json
+{
+  "slotId": "slot-uuid",
+  "venueId": "venue-uuid",
+  "guestCount": 2,
+  "notes": "Window seat preferred"
 }
 ```
 
-### Real-Time Subscription
+#### Get My Bookings
+`GET /api/bookings/my?limit=20&offset=0`
+*Header: `Authorization: Bearer <accessToken>`*
 
-```graphql
-subscription OnSlotUpdated {
-  slotAvailabilityChanged(venueId: "venue_01HQ3...") {
-    slotId
-    status
-    remainingCapacity
-  }
+#### Get Booking by ID
+`GET /api/bookings/:id`
+*Header: `Authorization: Bearer <accessToken>`*
+
+#### Cancel a Booking
+`POST /api/bookings/:id/cancel`
+*Header: `Authorization: Bearer <accessToken>`*
+```json
+{
+  "reason": "Schedule conflict"
 }
 ```
 
-## Environment Variables
+---
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `4000` |
-| `DATABASE_URL` | PostgreSQL connection string | -- |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
-| `JWT_SECRET` | Secret for signing tokens | -- |
-| `JWT_EXPIRES_IN` | Token expiry duration | `7d` |
-| `AWS_REGION` | AWS region for SNS | `us-east-1` |
-| `SNS_TOPIC_ARN` | SNS topic for notifications | -- |
-| `RATE_LIMIT_MAX_REQUESTS` | Requests per window | `100` |
-| `MAX_BOOKING_ADVANCE_DAYS` | Booking horizon in days | `90` |
-| `SLOT_DURATION_MINUTES` | Default slot length | `30` |
+### Real-Time WebSocket Events
 
-## Project Structure
+Connect to `ws://localhost:4000/ws`.
 
+The server broadcasts JSON messages when slot availability or bookings change:
+
+#### Slot Availability Changed
+```json
+{
+  "event": "slotAvailabilityChanged",
+  "payload": {
+    "slotId": "uuid",
+    "venueId": "uuid",
+    "status": "available",
+    "remainingCapacity": 2
+  },
+  "timestamp": "2026-11-14T06:00:00.000Z"
+}
 ```
-src/
-  config/        # Database and service configuration
-  middleware/     # Auth, rate limiting, error handling
-  models/        # TypeORM entities (Booking, Slot, User)
-  schema/        # GraphQL type definitions and resolvers
-  services/      # Business logic layer
-  utils/         # Redis client, logger, helpers
-  index.ts       # Application entry point
+
+#### Booking Status Changed
+```json
+{
+  "event": "bookingStatusChanged",
+  "payload": {
+    "bookingId": "uuid",
+    "status": "confirmed",
+    "confirmationCode": "RSV-08CF964C",
+    "userId": "uuid"
+  },
+  "timestamp": "2026-11-14T06:00:00.000Z"
+}
 ```
 
 ## Scripts
@@ -240,15 +238,11 @@ src/
 | `npm run dev` | Start development server with hot reload |
 | `npm run build` | Compile TypeScript to JavaScript |
 | `npm start` | Run compiled production build |
-| `npm test` | Run test suite with coverage |
-| `npm run migrate` | Run pending database migrations |
+| `npm test` | Run test suite |
+| `npm run seed` | Seed database with demo users and slots |
 | `npm run lint` | Lint source files |
 | `npm run docker:up` | Start all services via Docker Compose |
 
 ## License
 
 MIT
-
----
-
-<p align="center">Built by <a href="https://github.com/nicolaslumbert">Nicolas Lumbert</a></p>

@@ -1,4 +1,4 @@
-import { Queue, Worker, Job, QueueScheduler, QueueEvents } from 'bullmq';
+import { Queue, Worker, Job, QueueEvents } from 'bullmq';
 import { logger } from '../utils/logger';
 
 export interface JobPayload {

@@ -12,7 +12,7 @@ const baseConfig: DataSourceOptions = {
   username: process.env.DB_USER || 'reserve',
   password: process.env.DB_PASSWORD || 'reserve_secret',
   database: process.env.DB_NAME || 'reserve_db',
-  synchronize: false,
+  synchronize: process.env.DB_SYNCHRONIZE ? process.env.DB_SYNCHRONIZE === 'true' : !isProduction,
   logging: isProduction ? ['error', 'warn'] : ['query', 'error', 'warn'],
   entities: [__dirname + '/../models/*.{ts,js}'],
   migrations: [__dirname + '/../migrations/*.{ts,js}'],
@@ -63,3 +63,4 @@ export async function closeDatabase(): Promise<void> {
 }
 
 export default AppDataSource;
+

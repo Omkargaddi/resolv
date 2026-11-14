@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 import { AppDataSource } from '../config/database';
 import { User, UserRole } from '../models/User';
@@ -12,9 +12,8 @@ export interface AuthPayload {
   exp: number;
 }
 
-export interface AuthenticatedContext {
-  user: AuthPayload | null;
-  isAuthenticated: boolean;
+export interface AuthenticatedRequest extends Request {
+  user?: AuthPayload;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-dev-secret';
@@ -32,7 +31,7 @@ export function generateTokens(user: User): {
   };
 
   const accessToken = jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
+    expiresIn: JWT_EXPIRES_IN as SignOptions['expiresIn'],
     issuer: 'reserve-api',
     audience: 'reserve-client',
   });
@@ -40,7 +39,7 @@ export function generateTokens(user: User): {
   const refreshToken = jwt.sign(
     { userId: user.id, tokenType: 'refresh' },
     JWT_SECRET,
-    { expiresIn: JWT_REFRESH_EXPIRES_IN, issuer: 'reserve-api' }
+    { expiresIn: JWT_REFRESH_EXPIRES_IN as SignOptions['expiresIn'], issuer: 'reserve-api' }
   );
 
   return { accessToken, refreshToken };
@@ -62,50 +61,68 @@ export function extractTokenFromHeader(authHeader?: string): string | null {
   return parts[1];
 }
 
-export async function getAuthContext(req: Request): Promise<AuthenticatedContext> {
+export function authenticate(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
   const token = extractTokenFromHeader(req.headers.authorization);
 
   if (!token) {
-    return { user: null, isAuthenticated: false };
+    res.status(401).json({
+      error: 'Authentication required',
+      code: 'UNAUTHORIZED',
+    });
+    return;
   }
 
   try {
     const payload = verifyToken(token);
-
-    return {
-      user: payload,
-      isAuthenticated: true,
-    };
+    req.user = payload;
+    next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       logger.debug('Token expired', { error: error.message });
+      res.status(401).json({
+        error: 'Token expired',
+        code: 'TOKEN_EXPIRED',
+      });
+      return;
     } else if (error instanceof jwt.JsonWebTokenError) {
       logger.warn('Invalid token presented', { error: error.message });
     }
 
-    return { user: null, isAuthenticated: false };
+    res.status(401).json({
+      error: 'Invalid token',
+      code: 'INVALID_TOKEN',
+    });
   }
 }
 
-export function requireAuth(
-  context: AuthenticatedContext
-): asserts context is AuthenticatedContext & { user: AuthPayload; isAuthenticated: true } {
-  if (!context.isAuthenticated || !context.user) {
-    throw new Error('Authentication required');
-  }
-}
+export function authorizeRole(...roles: UserRole[]) {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    if (!req.user) {
+      res.status(401).json({
+        error: 'Authentication required',
+        code: 'UNAUTHORIZED',
+      });
+      return;
+    }
 
-export function requireRole(
-  context: AuthenticatedContext,
-  ...roles: UserRole[]
-): void {
-  requireAuth(context);
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({
+        error: `Insufficient permissions. Required: ${roles.join(' or ')}`,
+        code: 'FORBIDDEN',
+      });
+      return;
+    }
 
-  if (!roles.includes(context.user.role)) {
-    throw new Error(
-      `Insufficient permissions. Required: ${roles.join(' or ')}`
-    );
-  }
+    next();
+  };
 }
 
 export async function refreshAccessToken(
