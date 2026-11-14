@@ -1,30 +1,29 @@
-FROM node:20-alpine AS base
+FROM golang:1.22-alpine AS builder
+
 WORKDIR /app
-RUN apk add --no-cache dumb-init curl
 
-FROM base AS dependencies
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production && \
-    cp -R node_modules /prod_modules && \
-    npm ci
+RUN apk add --no-cache git ca-certificates
 
-FROM dependencies AS build
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
 
-FROM base AS production
-ENV NODE_ENV=production
-USER node
+COPY backend/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/seed ./cmd/seed
 
-COPY --chown=node:node --from=build /app/dist ./dist
-COPY --chown=node:node --from=dependencies /prod_modules ./node_modules
-COPY --chown=node:node package.json ./
+FROM alpine:3.19 AS production
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates curl tzdata dumb-init
+
+COPY --from=builder /app/server /app/server
+COPY --from=builder /app/seed /app/seed
 
 EXPOSE 4000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/index.js"]
+CMD ["/app/server"]

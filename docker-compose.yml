@@ -11,9 +11,9 @@ services:
       - "${PORT:-4000}:4000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${DB_USER:-reserve}:${DB_PASSWORD:-reserve_secret}@postgres:5432/${DB_NAME:-reserve_db}
+      - DATABASE_URL=postgresql://${DB_USER:-reserve}:${DB_PASSWORD:-reserve_secret}@postgres:5432/${DB_NAME:-reserve_db}?sslmode=disable
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-fallback-secret-production}
       - AWS_REGION=${AWS_REGION:-us-east-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -31,7 +31,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 20s
 
   postgres:
     image: postgres:16-alpine
@@ -44,7 +44,6 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-reserve} -d ${DB_NAME:-reserve_db}"]
       interval: 10s
