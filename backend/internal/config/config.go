@@ -35,7 +35,8 @@ func LoadConfig() (*Config, error) {
 	port := getEnv("PORT", "4000")
 	env := getEnv("NODE_ENV", getEnv("APP_ENV", "development"))
 
-	dbURL := os.Getenv("DATABASE_URL")
+	dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+	dbURL = strings.Trim(dbURL, `"'`)
 	if dbURL == "" {
 		dbHost := getEnv("DB_HOST", "localhost")
 		dbPort := getEnv("DB_PORT", "5432")
@@ -43,6 +44,17 @@ func LoadConfig() (*Config, error) {
 		dbPass := getEnv("DB_PASSWORD", "reserve_secret")
 		dbName := getEnv("DB_NAME", "reserve_db")
 		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPass, dbHost, dbPort, dbName)
+	}
+
+	redisURL := strings.TrimSpace(getEnv("REDIS_URL", getEnv("UPSTASH_REDIS_URL", "")))
+	redisURL = strings.Trim(redisURL, `"'`)
+	if redisURL == "" {
+		redisURL = "redis://localhost:6379"
+	} else if strings.Contains(redisURL, "upstash.io") && strings.HasPrefix(redisURL, "redis://") {
+		// Automatically upgrade Upstash URLs to rediss:// to ensure TLS is enabled (prevents EOF error)
+		redisURL = "rediss://" + strings.TrimPrefix(redisURL, "redis://")
+	} else if strings.Contains(redisURL, "upstash.io") && !strings.Contains(redisURL, "://") {
+		redisURL = "rediss://" + redisURL
 	}
 
 	jwtAccessExpiry := parseDurationWithDays(getEnv("JWT_EXPIRES_IN", "7d"), 7*24*time.Hour)
@@ -59,7 +71,7 @@ func LoadConfig() (*Config, error) {
 		Env:                          env,
 		DatabaseURL:                  dbURL,
 		DBPoolSize:                   poolSize,
-		RedisURL:                     getEnv("REDIS_URL", "redis://localhost:6379"),
+		RedisURL:                     redisURL,
 		JWTSecret:                    getEnv("JWT_SECRET", "fallback-dev-secret"),
 		JWTAccessExpiry:              jwtAccessExpiry,
 		JWTRefreshExpiry:             jwtRefreshExpiry,

@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: resolv-backend
+    runtime: go
+    rootDir: backend
+    buildCommand: go build -o bin/server ./cmd/server
+    startCommand: ./bin/server
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MAX_BOOKING_ADVANCE_DAYS
+        value: "90"
+      - key: SLOT_DURATION_MINUTES
+        value: "30"
+      - key: MAX_CONCURRENT_BOOKINGS_PER_USER
+        value: "20"
+      - key: BOOKING_CANCELLATION_WINDOW_HOURS
+        value: "24"

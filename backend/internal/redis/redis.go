@@ -23,16 +23,17 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}
 
 	opts.MaxRetries = 3
+	opts.ConnMaxIdleTime = 5 * time.Minute
 	rdb := redis.NewClient(opts)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("redis connection error: %w", err)
+		return nil, fmt.Errorf("redis connection error: %w (dialed %s, TLS=%v - verify REDIS_URL uses rediss://)", err, opts.Addr, opts.TLSConfig != nil)
 	}
 
-	log.Println("[INFO] Redis connection established")
+	log.Printf("[INFO] Redis connection established to %s (TLS: %v)", opts.Addr, opts.TLSConfig != nil)
 	return &Client{RDB: rdb}, nil
 }
 

@@ -178,6 +178,9 @@ export async function getQueueStatsApi(token: string): Promise<QueueStats> {
 }
 
 export async function getHealthApi(): Promise<{ status: string; uptime: number; timestamp: string }> {
-  const res = await axios.get('/health');
+  const rootUrl = API_BASE.replace(/\/api$/, '');
+  const url = rootUrl ? `${rootUrl}/health` : '/health';
+  const res = await axios.get(url);
   return res.data;
 }
+

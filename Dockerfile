@@ -23,7 +23,7 @@ COPY --from=builder /app/seed /app/seed
 EXPOSE 4000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:4000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["/app/server"]
