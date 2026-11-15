@@ -182,7 +182,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, input CreateBookingI
 		input.GuestCount = 1
 	}
 
-	// 1. Acquire Redis distributed lock
+	// Acquire Redis distributed lock
 	lockKey := fmt.Sprintf("booking:slot:%s", input.SlotID)
 	lockID, err := s.redis.AcquireLock(ctx, lockKey, 15*time.Second)
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *BookingService) CreateBooking(ctx context.Context, input CreateBookingI
 		_, _ = s.redis.ReleaseLock(context.Background(), lockKey, lockID)
 	}()
 
-	// 2. Serializable transaction
+	// serializable transaction
 	tx, err := s.db.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)

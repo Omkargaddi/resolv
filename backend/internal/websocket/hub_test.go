@@ -12,6 +12,5 @@ func TestHubSingletonAndBroadcast(t *testing.T) {
 		t.Errorf("expected GetHub() to return the same singleton instance")
 	}
 
-	// Broadcasting without connected clients should not panic or block
 	hub1.Broadcast("testEvent", map[string]string{"hello": "world"})
 }

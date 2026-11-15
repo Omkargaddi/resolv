@@ -1,132 +1,214 @@
+# Resolv
+
 <p align="center">
-  <img width="866" height="288" alt="image" src="https://github.com/user-attachments/assets/d1eaaa77-c2de-43d7-a463-b5041a643196" />
-  <p align="center">A high-performance, real-time booking and reservation system built for scale.</p>
+  <img width="866" height="288" alt="Resolv" src="https://github.com/user-attachments/assets/d1eaaa77-c2de-43d7-a463-b5041a643196" />
 </p>
+
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go" alt="Go" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Router-Chi-blue?style=flat-square" alt="Chi" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/REST-API-005571?style=flat-square" alt="REST API" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/WebSockets-Gorilla-010101?style=flat-square" alt="WebSockets" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Redis-7.x-DC382D?style=flat-square&logo=redis" alt="Redis" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker" alt="Docker" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" /></a>
+  <strong>A scalable reservation platform built for reliable booking and real-time availability.</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go" alt="Go" />
+  <img src="https://img.shields.io/badge/Router-Chi-blue?style=flat-square" alt="Chi" />
+  <img src="https://img.shields.io/badge/API-REST-005571?style=flat-square" alt="REST API" />
+  <img src="https://img.shields.io/badge/WebSockets-Gorilla-010101?style=flat-square" alt="WebSockets" />
+  <img src="https://img.shields.io/badge/Redis-7.x-DC382D?style=flat-square&logo=redis" alt="Redis" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker" alt="Docker" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
 </p>
 
 ---
 
-## Overview
+## Introduction
 
-Resolv is a production-grade reservation engine designed to handle high-concurrency booking scenarios with zero double-booking guarantees. It leverages Redis distributed locks, PostgreSQL row-level locking (`SELECT ... FOR UPDATE`), serializable transactions, and an event-driven architecture to ensure data integrity under heavy load.
+Resolv is a high-throughput reservation backend built to manage bookings reliably, even when multiple users compete for the same availability.
 
-Built as a high-throughput Go service using Chi, pgx, Asynq, and native WebSocket event broadcasting, Resolv supports multi-tenant venue management, flexible time-slot configurations, and real-time availability updates.
+Its booking engine combines Redis-based distributed locking with PostgreSQL transaction controls, including row-level locks (`SELECT ... FOR UPDATE`) and serializable transactions. These mechanisms coordinate concurrent booking requests and protect against double bookings.
 
-## Features
+The platform is implemented in Go using Chi, pgx, Redis, and Asynq. It provides a REST API, live WebSocket updates, background task processing, and support for managing multiple venues with independently configured availability schedules.
 
-- **Real-time Booking Engine** -- Optimistic and distributed locking with Redis + PostgreSQL pessimistic locking (`FOR UPDATE`) to prevent double bookings under concurrent access
-- **RESTful API** -- Clean, organized endpoints under `/api` for authentication, venues, slots, and bookings
-- **Real-Time WebSockets** -- Native WebSocket broadcasting at `/ws` for slot availability and booking status changes powered by Gorilla WebSocket
-- **Queue-Based Processing** -- Asynq Redis workers for async booking confirmation, notification dispatch, and slot reclamation
-- **Event Notifications** -- Notification dispatch for booking confirmations, reminders, and cancellation alerts
-- **JWT Authentication** -- Stateless auth with refresh token rotation and role-based access control
-- **Multi-Venue Support** -- Manage multiple venues with independent availability calendars and slot configurations
-- **Automatic Slot Reclamation** -- Expired holds released back into the pool via scheduled recurring workers
-- **Observability** -- Structured logging, request tracing, and `/health` check endpoints
+## Platform Capabilities
 
-## Architecture
+- **Concurrency-safe reservations:** Coordinates competing booking requests through Redis distributed locks and PostgreSQL locking mechanisms.
+- **Venue and availability management:** Supports multiple venues, configurable time slots, and independent availability calendars.
+- **REST API:** Exposes structured endpoints for authentication, venue operations, slot management, and reservations.
+- **Live updates:** Broadcasts booking and slot availability changes to connected clients through WebSockets.
+- **Background execution:** Uses Asynq workers backed by Redis for asynchronous confirmations, notifications, and reservation-related tasks.
+- **Authentication and authorization:** Provides JWT-based authentication, refresh token rotation, and role-based access control.
+- **Reservation lifecycle management:** Handles booking creation, cancellation, status changes, and automatic release of expired holds.
+- **Operational visibility:** Includes structured application logs, request tracing, and health-check endpoints.
 
+## System Design
+
+Resolv separates HTTP request handling, reservation logic, persistence, and asynchronous processing into dedicated components.
+
+```text
+                       +----------------------+
+                       |     Client Apps      |
+                       |   React + Vite UI    |
+                       +----------+-----------+
+                                  |
+                           HTTPS / WebSocket
+                                  |
+                       +----------v-----------+
+                       |    Go API Gateway   |
+                       |   Chi + WebSockets  |
+                       +----------+-----------+
+                                  |
+                 +----------------+----------------+
+                 |                |                |
+          +------v------+  +------v-------+  +-----v---------+
+          | Authentication| | Reservation  |  | Notification  |
+          |   Middleware  | |   Service    |  |   Service     |
+          +--------------+ +------+-------+  +---------------+
+                                  |
+                         +--------+--------+
+                         |                 |
+                  +------v------+   +------v------+
+                  | PostgreSQL  |   |    Redis    |
+                  | Persistence |   | Locks/Queue |
+                  +-------------+   +------+------+
+                                          |
+                                    +-----v------+
+                                    | Asynq      |
+                                    | Background |
+                                    | Workers    |
+                                    +------------+
 ```
-                                    +------------------+
-                                    |   Client Apps     |
-                                    | (Web - React Vite)|
-                                    +--------+---------+
-                                             |
-                                     WebSocket / HTTPS
-                                             |
-                                    +--------v---------+
-                                    |  Go REST Gateway |
-                                    |   & WebSockets   |
-                                    +--+-----+------+--+
-                                       |     |      |
-                          +------------+     |      +-------------+
-                          |                  |                    |
-                  +-------v------+   +------v-------+   +-------v--------+
-                  |   Auth       |   |  Booking     |   |  Notification  |
-                  |  Middleware  |   |  Service     |   |  Service       |
-                  +--------------+   +--+--------+--+   +----------------+
-                                        |        |
-                                   +----v--+ +---v----+
-                                   |  PG   | | Redis  |
-                                   +-------+ +--------+
-                                                |
-                                          +-----v------+
-                                          |   Asynq    |
-                                          |   Workers  |
-                                          +------------+
-```
 
-## Tech Stack
+### Booking consistency
 
-| Layer            | Technology                                |
-|------------------|-------------------------------------------|
-| Backend Runtime  | Go 1.22+                                  |
-| API Router       | Chi (`github.com/go-chi/chi/v5`)          |
-| Real-Time        | Gorilla WebSocket (`gorilla/websocket`)   |
-| Database         | PostgreSQL 16, pgx (`jackc/pgx/v5`)       |
-| Cache / Locks    | Redis 7 (`redis/go-redis/v9`)             |
-| Queue / Tasks    | Asynq (`hibiken/asynq`)                   |
-| Auth             | JWT (`golang-jwt/jwt/v5`), bcrypt         |
-| Notifications    | Internal Event / Logger Service           |
-| Frontend         | React 19, TypeScript, Vite, TailwindCSS   |
-| Containerization | Docker, Docker Compose                    |
+Reservation requests pass through multiple protection layers:
 
----
+1. **Redis distributed locks** coordinate access to shared booking resources across concurrent requests.
+2. **PostgreSQL row-level locking** protects records during critical database operations.
+3. **Serializable transactions** provide an additional layer of transaction isolation.
+4. **Asynchronous workers** handle tasks that do not need to execute in the initial HTTP request, including notifications and scheduled reservation cleanup.
 
-## Quick Start
+Together, these mechanisms are designed to preserve booking integrity under high concurrency.
 
-### Prerequisites
+## Technology Stack
 
-- Go >= 1.22
-- Node.js >= 18 (for the frontend React client)
-- Docker & Docker Compose
+| Component | Technology |
+|---|---|
+| Backend language | Go 1.22+ |
+| HTTP routing | Chi |
+| Real-time communication | Gorilla WebSocket |
+| Database | PostgreSQL 16 |
+| Database driver | pgx |
+| Distributed locking and caching | Redis 7 |
+| Background jobs | Asynq |
+| Authentication | JWT and bcrypt |
+| Frontend | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS |
+| Deployment | Docker and Docker Compose |
 
-### Installation & Local Setup
+## Getting Started
+
+### Requirements
+
+Before running Resolv locally, make sure the following tools are available:
+
+- Go 1.22 or later
+- Node.js 18 or later
+- Docker
+- Docker Compose
+
+### 1. Get the source code
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/nicolaslumbert/reserve-api.git
-cd reserve-api
+git clone https://github.com/Omkargaddi/resolv.git
+cd resolv
+```
 
-# 2. Copy environment configuration
+### 2. Configure environment variables
+
+Create your local environment file from the supplied example:
+
+```bash
 cp .env.example .env
+```
 
-# 3. Start database and cache infrastructure
+Update the environment values as needed for your local database, Redis instance, and application configuration.
+
+### 3. Launch infrastructure services
+
+Start PostgreSQL and Redis using Docker Compose:
+
+```bash
 docker-compose up -d postgres redis
+```
 
-# 4. Seed initial test data (Admin, users, and 7-day slot schedule)
+### 4. Initialize the database
+
+Populate the database with the initial users, admin account, venue data, and a seven-day availability schedule:
+
+```bash
 npm run backend:seed
-# Or directly:
-cd backend && go run ./cmd/seed && cd ..
+```
 
-# 5. Start Go backend server
+Alternatively, execute the seed command directly from the backend directory:
+
+```bash
+cd backend
+go run ./cmd/seed
+cd ..
+```
+
+### 5. Run the backend
+
+Start the Go API server:
+
+```bash
 npm run backend:dev
-# Or directly:
-cd backend && go run ./cmd/server && cd ..
+```
 
-# 6. In a new terminal, start frontend dev server
+Or run it directly:
+
+```bash
+cd backend
+go run ./cmd/server
+```
+
+### 6. Start the frontend
+
+Open another terminal at the project root and run:
+
+```bash
 npm run frontend:dev
 ```
 
-The REST API will be available at `http://localhost:4000/api`, WebSockets at `ws://localhost:4000/ws`, and the frontend UI at `http://localhost:3000`.
+### Local endpoints
+
+| Service | Address |
+|---|---|
+| REST API | `http://localhost:4000/api` |
+| WebSocket endpoint | `ws://localhost:4000/ws` |
+| Frontend | `http://localhost:3000` |
 
 ---
 
-## API Documentation
+## API Reference
+
+All REST endpoints are grouped under `/api`. Protected routes require a valid access token in the `Authorization` header.
+
+```http
+Authorization: Bearer <access-token>
+```
 
 ### Authentication
 
-#### Register
-`POST /api/auth/register`
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/auth/register` | Create a user account |
+| `POST` | `/api/auth/login` | Authenticate a user |
+| `POST` | `/api/auth/refresh` | Obtain a new access token |
+| `GET` | `/api/auth/me` | Retrieve the authenticated user's profile |
+
+**Register**
+
 ```json
 {
   "name": "Jane Doe",
@@ -136,8 +218,8 @@ The REST API will be available at `http://localhost:4000/api`, WebSockets at `ws
 }
 ```
 
-#### Login
-`POST /api/auth/login`
+**Login**
+
 ```json
 {
   "email": "user@example.com",
@@ -145,48 +227,45 @@ The REST API will be available at `http://localhost:4000/api`, WebSockets at `ws
 }
 ```
 
-#### Refresh Token
-`POST /api/auth/refresh`
+**Refresh access token**
+
 ```json
 {
   "refreshToken": "<refresh-token>"
 }
 ```
 
-#### Get Current Profile
-`GET /api/auth/me`
-*Header: `Authorization: Bearer <accessToken>`*
+### Venue and Slot Management
 
----
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/venues/:venueId/slots?date=2026-11-15` | List available slots for a venue and date |
+| `GET` | `/api/slots/:id` | Retrieve slot details |
+| `POST` | `/api/slots/:id/block` | Block a slot (Admin) |
+| `POST` | `/api/slots/:id/unblock` | Restore a blocked slot (Admin) |
 
-### Slots
+**Block a slot**
 
-#### Get Available Slots for a Venue
-`GET /api/venues/:venueId/slots?date=2026-11-15`
-
-#### Get Slot by ID
-`GET /api/slots/:id`
-
-#### Block Slot (Admin Only)
-`POST /api/slots/:id/block`
-*Header: `Authorization: Bearer <adminToken>`*
 ```json
 {
   "reason": "Maintenance"
 }
 ```
 
-#### Unblock Slot (Admin Only)
-`POST /api/slots/:id/unblock`
-*Header: `Authorization: Bearer <adminToken>`*
+Administrative operations require an admin access token.
 
----
+### Reservation Management
 
-### Bookings
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/bookings` | Create a reservation |
+| `GET` | `/api/bookings/my?limit=20&offset=0` | List the current user's reservations |
+| `GET` | `/api/bookings/:id` | Retrieve a reservation by ID |
+| `GET` | `/api/bookings/code/:code` | Find a reservation using its confirmation code |
+| `POST` | `/api/bookings/:id/cancel` | Cancel an existing reservation |
 
-#### Create a Booking
-`POST /api/bookings`
-*Header: `Authorization: Bearer <accessToken>`*
+**Create a reservation**
+
 ```json
 {
   "slotId": "slot-uuid",
@@ -196,44 +275,42 @@ The REST API will be available at `http://localhost:4000/api`, WebSockets at `ws
 }
 ```
 
-#### Get My Bookings
-`GET /api/bookings/my?limit=20&offset=0`
-*Header: `Authorization: Bearer <accessToken>`*
+**Cancel a reservation**
 
-#### Get Booking by ID
-`GET /api/bookings/:id`
-*Header: `Authorization: Bearer <accessToken>`*
-
-#### Get Booking by Code
-`GET /api/bookings/code/:code`
-*Header: `Authorization: Bearer <accessToken>`*
-
-#### Cancel a Booking
-`POST /api/bookings/:id/cancel`
-*Header: `Authorization: Bearer <accessToken>`*
 ```json
 {
   "reason": "Schedule conflict"
 }
 ```
 
+These endpoints require an authenticated user unless otherwise specified by the application.
+
+### Administration
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/admin/queue-stats` | View background task queue statistics |
+
+This endpoint is restricted to administrators.
+
 ---
 
-### Admin & Queue
+## Real-Time Communication
 
-#### Get Queue Statistics (Admin Only)
-`GET /api/admin/queue-stats`
-*Header: `Authorization: Bearer <adminToken>`*
+Resolv provides a WebSocket endpoint for clients that need immediate updates without repeatedly polling the REST API.
 
----
+Connect to:
 
-### Real-Time WebSocket Events
+```text
+ws://localhost:4000/ws
+```
 
-Connect to `ws://localhost:4000/ws`.
+The server broadcasts JSON events when relevant reservation or availability state changes.
 
-The server broadcasts JSON messages when slot availability or bookings change:
+### Availability update
 
-#### Slot Availability Changed
+Emitted when a slot's availability changes.
+
 ```json
 {
   "event": "slotAvailabilityChanged",
@@ -247,7 +324,10 @@ The server broadcasts JSON messages when slot availability or bookings change:
 }
 ```
 
-#### Booking Status Changed
+### Reservation status update
+
+Emitted when a reservation changes state.
+
 ```json
 {
   "event": "bookingStatusChanged",
@@ -261,18 +341,43 @@ The server broadcasts JSON messages when slot availability or bookings change:
 }
 ```
 
----
+Clients can use these events to keep availability indicators and reservation status synchronized with the backend.
 
-## Scripts
+## Background Processing
+
+Long-running and scheduled operations are handled outside the main HTTP request flow.
+
+Resolv uses **Asynq with Redis** to process background tasks such as:
+
+- Reservation confirmation workflows
+- Notification dispatch
+- Booking reminders
+- Cancellation-related notifications
+- Automatic cleanup of expired reservation holds
+
+Recurring workers help return expired holds to the available slot pool.
+
+## Development Commands
+
+The following scripts are available from the project root:
 
 | Command | Description |
-|---------|-------------|
-| `npm run backend:dev` | Run Go backend server (`go run ./cmd/server`) |
-| `npm run backend:seed` | Seed database with users and venue slots |
-| `npm run backend:test` | Run Go unit and model tests |
-| `npm run backend:build` | Build production Go binary to `bin/server` |
-| `npm run frontend:dev` | Start frontend React/Vite development server |
-| `npm run frontend:build` | Compile production frontend build |
-| `npm run docker:up` | Start all services via Docker Compose |
-| `npm run docker:down` | Stop Docker Compose services |
+|---|---|
+| `npm run backend:dev` | Start the Go backend in development mode |
+| `npm run backend:seed` | Insert initial application and venue data |
+| `npm run backend:test` | Execute backend tests |
+| `npm run backend:build` | Compile the backend into `bin/server` |
+| `npm run frontend:dev` | Start the frontend development server |
+| `npm run frontend:build` | Build the frontend for production |
+| `npm run docker:up` | Start the Docker Compose services |
+| `npm run docker:down` | Stop the Docker Compose services |
+
+## Health and Observability
+
+Resolv includes operational endpoints and logging facilities to help monitor the service:
+
+- **Health checks:** `/health` provides an endpoint for service health monitoring.
+- **Structured logging:** Application events are recorded in a structured format.
+- **Request tracing:** Request-level tracing helps follow application activity.
+- **Queue statistics:** Administrators can inspect background task queue information through the admin API.
 
